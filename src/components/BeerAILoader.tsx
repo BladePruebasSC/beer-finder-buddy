@@ -48,19 +48,19 @@ export const BeerAILoader = ({ onComplete, type = "initial" }: BeerAILoaderProps
         isVisible ? "opacity-100" : "opacity-0"
       }`}
     >
-      <div className="text-center px-4">
-        <div className="relative mb-8">
+      <div className="text-center px-4 max-w-md w-full">
+        <div className="relative mb-6 sm:mb-8">
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-32 h-32 bg-gradient-to-br from-primary/20 to-accent/20 rounded-full animate-ping" />
+            <div className="w-24 h-24 sm:w-32 sm:h-32 bg-gradient-to-br from-primary/20 to-accent/20 rounded-full animate-ping" />
           </div>
           <div className="relative flex items-center justify-center">
-            <div className="w-24 h-24 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center shadow-2xl animate-pulse">
-              <Beer className="text-white" size={48} />
+            <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center shadow-2xl animate-pulse">
+              <Beer className="text-white" size={40} />
             </div>
           </div>
         </div>
 
-        <div className="space-y-4 min-h-[120px]">
+        <div className="space-y-3 sm:space-y-4 min-h-[100px] sm:min-h-[120px]">
           {messages.map((message, index) => {
             const Icon = message.icon;
             const isActive = index === currentStep;
@@ -69,7 +69,7 @@ export const BeerAILoader = ({ onComplete, type = "initial" }: BeerAILoaderProps
             return (
               <div
                 key={index}
-                className={`flex items-center justify-center gap-3 transition-all duration-500 ${
+                className={`flex items-center justify-center gap-2 sm:gap-3 transition-all duration-500 ${
                   isActive
                     ? "opacity-100 scale-100 translate-y-0"
                     : isPast
@@ -78,13 +78,13 @@ export const BeerAILoader = ({ onComplete, type = "initial" }: BeerAILoaderProps
                 }`}
               >
                 <Icon
-                  className={`${
+                  className={`flex-shrink-0 ${
                     isActive ? "text-primary animate-pulse" : "text-muted-foreground"
                   }`}
-                  size={24}
+                  size={20}
                 />
                 <p
-                  className={`text-lg font-medium ${
+                  className={`text-sm sm:text-base md:text-lg font-medium leading-tight ${
                     isActive ? "text-foreground" : "text-muted-foreground"
                   }`}
                 >
@@ -95,18 +95,18 @@ export const BeerAILoader = ({ onComplete, type = "initial" }: BeerAILoaderProps
           })}
         </div>
 
-        <div className="mt-8 flex justify-center gap-2">
+        <div className="mt-6 sm:mt-8 flex justify-center gap-1.5 sm:gap-2">
           {messages.map((_, index) => (
             <div
               key={index}
-              className={`h-2 rounded-full transition-all duration-300 ${
-                index <= currentStep ? "w-8 bg-gradient-to-r from-primary to-accent" : "w-2 bg-muted"
+              className={`h-1.5 sm:h-2 rounded-full transition-all duration-300 ${
+                index <= currentStep ? "w-6 sm:w-8 bg-gradient-to-r from-primary to-accent" : "w-1.5 sm:w-2 bg-muted"
               }`}
             />
           ))}
         </div>
 
-        <p className="mt-8 text-sm text-muted-foreground animate-pulse">
+        <p className="mt-6 sm:mt-8 text-xs sm:text-sm text-muted-foreground animate-pulse">
           Powered by Beer AI 🧠✨
         </p>
       </div>
