@@ -150,10 +150,12 @@ const Catalog = () => {
     // Solo permitir swipe hacia arriba (valores negativos)
     if (deltaY < 0) {
       e.preventDefault();
+      e.stopPropagation();
       const notification = notificationRef.current;
       if (notification) {
         notification.style.transform = `translateY(${deltaY}px)`;
-        notification.style.opacity = `${Math.max(0, 1 + deltaY / 100)}`;
+        notification.style.opacity = `${Math.max(0.1, 1 + deltaY / 80)}`;
+        notification.style.transition = 'none'; // Desactivar transición durante el swipe
       }
     }
   };
@@ -167,14 +169,15 @@ const Catalog = () => {
     const notification = notificationRef.current;
     
     // Si el swipe es suficiente hacia arriba, ocultar la notificación
-    if (deltaY < -50) {
+    if (deltaY < -60) {
       setShowAiMessage(false);
-    }
-    
-    // Resetear la posición
-    if (notification) {
-      notification.style.transform = '';
-      notification.style.opacity = '';
+    } else {
+      // Resetear la posición con animación suave
+      if (notification) {
+        notification.style.transition = 'all 0.3s ease-out';
+        notification.style.transform = '';
+        notification.style.opacity = '';
+      }
     }
     
     setIsSwipeActive(false);
