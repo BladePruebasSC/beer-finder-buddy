@@ -163,17 +163,17 @@ const Index = () => {
   return (
     <div className={`min-h-screen bg-gradient-to-b from-background via-background to-muted transition-opacity duration-500 ${showContent ? 'opacity-100' : 'opacity-0'}`}>
       <div
-        className={`fixed top-4 left-1/2 -translate-x-1/2 z-40 transition-all duration-500 ${
+        className={`fixed top-4 left-4 right-4 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 z-40 transition-all duration-500 ${
           showAiMessage ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
         }`}
       >
-        <button
-          onClick={() => setIsChatOpen(true)}
-          className="bg-gradient-to-r from-primary to-accent text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 max-w-md hover:shadow-3xl transition-all duration-300 hover:scale-105 cursor-pointer"
-        >
-          <MessageCircle className="animate-bounce" size={20} />
-          <p className="font-medium">{aiMessage}</p>
-        </button>
+         <button
+           onClick={() => setIsChatOpen(true)}
+           className="bg-gradient-to-r from-primary to-accent text-white px-6 sm:px-10 py-4 rounded-3xl shadow-2xl flex items-center gap-4 w-full max-w-none sm:max-w-xl md:max-w-2xl lg:max-w-3xl xl:max-w-4xl hover:shadow-3xl transition-all duration-300 hover:scale-105 cursor-pointer"
+         >
+           <MessageCircle className="animate-bounce flex-shrink-0" size={22} />
+           <p className="font-medium text-sm sm:text-base md:text-lg leading-relaxed text-left">{aiMessage}</p>
+         </button>
       </div>
 
       <section className="relative overflow-hidden">
@@ -189,11 +189,12 @@ const Index = () => {
 
         <div className="relative container mx-auto px-4 py-12 md:py-20">
           <div className="max-w-4xl mx-auto text-center">
-            <button
-              onClick={() => setIsChatOpen(true)}
-              className="inline-flex items-center justify-center w-16 h-16 md:w-20 md:h-20 rounded-full bg-gradient-to-br from-primary to-accent shadow-lg mb-6 animate-pulse hover:shadow-2xl hover:scale-110 transition-all duration-300 cursor-pointer group"
-              title="Hablar con la IA"
-            >
+             <button
+               onClick={() => setIsChatOpen(true)}
+               className="inline-flex items-center justify-center w-16 h-16 md:w-20 md:h-20 rounded-full bg-gradient-to-br from-primary to-accent shadow-lg mb-6 hover:shadow-2xl hover:scale-110 transition-all duration-300 cursor-pointer group"
+               title="Hablar con la IA"
+               style={{ animation: 'gentle-pulse 3s ease-in-out infinite' }}
+             >
               <BeerIcon className="text-primary-foreground group-hover:rotate-12 transition-transform duration-300" size={32} />
             </button>
             <h1 className="text-4xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">

@@ -134,17 +134,17 @@ const Catalog = () => {
   return (
     <div className={`min-h-screen bg-gradient-to-b from-background to-muted transition-opacity duration-700 ${showContent ? 'opacity-100' : 'opacity-0'}`}>
       <div
-        className={`fixed top-4 left-1/2 -translate-x-1/2 z-40 transition-all duration-500 ${
+        className={`fixed top-4 left-4 right-4 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 z-40 transition-all duration-500 ${
           showAiMessage ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
         }`}
       >
-        <button
-          onClick={() => setIsChatOpen(true)}
-          className="bg-gradient-to-r from-primary to-accent text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 max-w-2xl hover:shadow-3xl transition-all duration-300 hover:scale-105 cursor-pointer"
-        >
-          <MessageCircle className="animate-bounce" size={20} />
-          <p className="font-medium">{aiMessage}</p>
-        </button>
+         <button
+           onClick={() => setIsChatOpen(true)}
+           className="bg-gradient-to-r from-primary to-accent text-white px-6 sm:px-10 py-4 rounded-3xl shadow-2xl flex items-center gap-4 w-full max-w-none sm:max-w-xl md:max-w-2xl lg:max-w-3xl xl:max-w-4xl hover:shadow-3xl transition-all duration-300 hover:scale-105 cursor-pointer"
+         >
+           <MessageCircle className="animate-bounce flex-shrink-0" size={22} />
+           <p className="font-medium text-sm sm:text-base md:text-lg leading-relaxed text-left">{aiMessage}</p>
+         </button>
       </div>
 
       <div className="container mx-auto px-4 py-8">
