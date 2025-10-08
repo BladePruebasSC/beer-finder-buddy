@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +18,9 @@ const Catalog = () => {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [showSearchLoader, setShowSearchLoader] = useState(false);
   const [searchFilters, setSearchFilters] = useState<any>(null);
+  const [swipeY, setSwipeY] = useState(0);
+  const [isSwipeActive, setIsSwipeActive] = useState(false);
+  const notificationRef = useRef<HTMLDivElement>(null);
   
   const defaultFilters = {
     style: [],
@@ -124,19 +127,70 @@ const Catalog = () => {
         ];
       }
 
-      const randomMessage = messages[Math.floor(Math.random() * messages.length)];
-      setAiMessage(randomMessage);
-      setShowAiMessage(true);
-      setTimeout(() => setShowAiMessage(false), 4000);
+       const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+       setAiMessage(randomMessage);
+       setShowAiMessage(true);
+       setTimeout(() => setShowAiMessage(false), 6000);
     }
   }, [filteredBeers.length, hasActiveFilters]);
+
+  // Funciones para manejar el swipe
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    setSwipeY(touch.clientY);
+    setIsSwipeActive(true);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isSwipeActive) return;
+    
+    const touch = e.touches[0];
+    const deltaY = touch.clientY - swipeY;
+    
+    // Solo permitir swipe hacia arriba (valores negativos)
+    if (deltaY < 0) {
+      e.preventDefault();
+      const notification = notificationRef.current;
+      if (notification) {
+        notification.style.transform = `translateY(${deltaY}px)`;
+        notification.style.opacity = `${Math.max(0, 1 + deltaY / 100)}`;
+      }
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!isSwipeActive) return;
+    
+    const touch = e.changedTouches[0];
+    const deltaY = touch.clientY - swipeY;
+    
+    const notification = notificationRef.current;
+    
+    // Si el swipe es suficiente hacia arriba, ocultar la notificación
+    if (deltaY < -50) {
+      setShowAiMessage(false);
+    }
+    
+    // Resetear la posición
+    if (notification) {
+      notification.style.transform = '';
+      notification.style.opacity = '';
+    }
+    
+    setIsSwipeActive(false);
+    setSwipeY(0);
+  };
 
   return (
     <div className={`min-h-screen bg-gradient-to-b from-background to-muted transition-opacity duration-700 ${showContent ? 'opacity-100' : 'opacity-0'}`}>
       <div
+        ref={notificationRef}
         className={`fixed top-4 left-4 right-4 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 z-40 transition-all duration-500 ${
           showAiMessage ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
         }`}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       >
          <button
            onClick={() => setIsChatOpen(true)}

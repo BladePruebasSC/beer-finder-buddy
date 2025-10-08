@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AIChat } from "@/components/AIChat";
@@ -21,6 +21,9 @@ const Index = () => {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [showSearchLoader, setShowSearchLoader] = useState(false);
   const [searchFilters, setSearchFilters] = useState<any>(null);
+  const [swipeY, setSwipeY] = useState(0);
+  const [isSwipeActive, setIsSwipeActive] = useState(false);
+  const notificationRef = useRef<HTMLDivElement>(null);
   const [selectedFilters, setSelectedFilters] = useState<{
     style: string[];
     color: string[];
@@ -71,15 +74,15 @@ const Index = () => {
       if (showContent) {
         setAiMessage(aiMessages[messageIndex]);
         setShowAiMessage(true);
-        setTimeout(() => setShowAiMessage(false), 4000);
+        setTimeout(() => setShowAiMessage(false), 6000); // Más tiempo visible
         messageIndex = (messageIndex + 1) % aiMessages.length;
       }
-    }, 8000);
+    }, 12000); // Más tiempo entre mensajes
 
     if (showContent) {
       setAiMessage(aiMessages[0]);
       setShowAiMessage(true);
-      setTimeout(() => setShowAiMessage(false), 4000);
+      setTimeout(() => setShowAiMessage(false), 6000);
     }
 
     return () => clearInterval(messageInterval);
@@ -109,6 +112,53 @@ const Index = () => {
 
   const handleSearch = () => {
     setIsSearching(true);
+  };
+
+  // Funciones para manejar el swipe
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    setSwipeY(touch.clientY);
+    setIsSwipeActive(true);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isSwipeActive) return;
+    
+    const touch = e.touches[0];
+    const deltaY = touch.clientY - swipeY;
+    
+    // Solo permitir swipe hacia arriba (valores negativos)
+    if (deltaY < 0) {
+      e.preventDefault();
+      const notification = notificationRef.current;
+      if (notification) {
+        notification.style.transform = `translateY(${deltaY}px)`;
+        notification.style.opacity = `${Math.max(0, 1 + deltaY / 100)}`;
+      }
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!isSwipeActive) return;
+    
+    const touch = e.changedTouches[0];
+    const deltaY = touch.clientY - swipeY;
+    
+    const notification = notificationRef.current;
+    
+    // Si el swipe es suficiente hacia arriba, ocultar la notificación
+    if (deltaY < -50) {
+      setShowAiMessage(false);
+    }
+    
+    // Resetear la posición
+    if (notification) {
+      notification.style.transform = '';
+      notification.style.opacity = '';
+    }
+    
+    setIsSwipeActive(false);
+    setSwipeY(0);
   };
 
   const categories = [
@@ -163,9 +213,13 @@ const Index = () => {
   return (
     <div className={`min-h-screen bg-gradient-to-b from-background via-background to-muted transition-opacity duration-500 ${showContent ? 'opacity-100' : 'opacity-0'}`}>
       <div
+        ref={notificationRef}
         className={`fixed top-4 left-4 right-4 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 z-40 transition-all duration-500 ${
           showAiMessage ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
         }`}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       >
          <button
            onClick={() => setIsChatOpen(true)}
