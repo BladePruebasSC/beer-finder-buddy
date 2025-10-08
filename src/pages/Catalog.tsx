@@ -20,6 +20,7 @@ const Catalog = () => {
     flavor: [],
     strength: [],
     bitterness: [],
+    origin: [],
   };
 
   const filteredBeers = useMemo(() => {
@@ -57,6 +58,10 @@ const Catalog = () => {
           return false;
         });
         if (!bitternessMatch) return false;
+      }
+
+      if (selectedFilters.origin.length > 0 && beer.origin && !selectedFilters.origin.includes(beer.origin)) {
+        return false;
       }
 
       return true;

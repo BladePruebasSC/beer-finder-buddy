@@ -9,6 +9,8 @@ Tu proyecto ahora está completamente integrado con Supabase:
 - ✅ Hooks de React Query para operaciones CRUD
 - ✅ Migración de localStorage a Supabase
 - ✅ Subida de imágenes desde archivos locales y URLs
+- ✅ Filtro por origen de cerveza con índices optimizados
+- ✅ Vista de estadísticas por país
 
 ## 🚀 Pasos para Configurar Supabase
 
@@ -31,6 +33,7 @@ Tienes dos opciones para aplicar las migraciones:
 5. Copia y pega el contenido de `supabase/migrations/001_create_beers_table.sql`
 6. Haz clic en **Run** o presiona `Ctrl+Enter`
 7. Repite el proceso con `supabase/migrations/002_create_storage_bucket.sql`
+8. Repite el proceso con `supabase/migrations/003_add_origin_support.sql` ⭐ NUEVO
 
 #### Opción B: Usando Supabase CLI
 
@@ -58,6 +61,12 @@ SELECT * FROM beers LIMIT 5;
 
 -- Verificar que el bucket de storage existe
 SELECT * FROM storage.buckets WHERE id = 'beer-images';
+
+-- Verificar que las cervezas tienen origen
+SELECT name, origin FROM beers;
+
+-- Verificar estadísticas por origen
+SELECT * FROM beer_stats_by_origin;
 ```
 
 Si ambas queries funcionan correctamente, ¡todo está listo! 🎉
@@ -103,6 +112,8 @@ npm run dev
 
 - `supabase/migrations/001_create_beers_table.sql` - Esquema de base de datos
 - `supabase/migrations/002_create_storage_bucket.sql` - Configuración de storage
+- `supabase/migrations/003_add_origin_support.sql` - Soporte de filtros por origen ⭐
+- `supabase/migrations/README.md` - Documentación de migraciones
 - `src/hooks/useBeers.ts` - Hooks de React Query para operaciones CRUD
 - `src/lib/uploadImage.ts` - Utilidades para subir imágenes
 
@@ -158,6 +169,20 @@ El Dashboard ahora soporta dos métodos para añadir imágenes:
 - [Documentación de React Query](https://tanstack.com/query/latest)
 - [Guía de Supabase Storage](https://supabase.com/docs/guides/storage)
 
+## 🌎 Filtro por Origen
+
+La nueva migración `003_add_origin_support.sql` añade:
+
+- 🔍 **Índices optimizados** para búsquedas rápidas por origen, estilo, color y sabores
+- 🌍 **15 países predefinidos** con banderas en el selector
+- 📊 **Vista de estadísticas** `beer_stats_by_origin` con datos agregados por país
+- 🏷️ **Valores de origen** actualizados en las 12 cervezas iniciales
+
+Los usuarios ahora pueden:
+- Filtrar cervezas por país de origen desde la página principal
+- Ver estadísticas de cervezas agrupadas por país
+- Agregar/editar países desde el dashboard de administración
+
 ## 🎉 ¡Listo!
 
 Tu aplicación Beer Finder Buddy ahora está completamente conectada con Supabase. Disfruta de:
@@ -166,6 +191,8 @@ Tu aplicación Beer Finder Buddy ahora está completamente conectada con Supabas
 - 🖼️ Almacenamiento de imágenes escalable
 - 🚀 Operaciones CRUD en tiempo real
 - 📱 Sincronización automática entre dispositivos
+- 🌎 Filtros avanzados por origen geográfico
+- 📊 Estadísticas y análisis de datos
 
 ---
 

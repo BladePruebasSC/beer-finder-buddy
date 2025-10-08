@@ -557,12 +557,21 @@ const Dashboard = () => {
 
                   <div>
                     <Label htmlFor="origin">Origen</Label>
-                    <Input
-                      id="origin"
+                    <Select
                       value={formData.origin}
-                      onChange={(e) => setFormData({...formData, origin: e.target.value})}
-                      placeholder="País o región"
-                    />
+                      onValueChange={(value) => setFormData({...formData, origin: value})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecciona el país de origen" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {filters.origin.options.map((option) => (
+                          <SelectItem key={option.id} value={option.id}>
+                            {option.icon} {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div className="flex gap-2 pt-4">
@@ -694,6 +703,7 @@ const Dashboard = () => {
                           <SelectItem value="flavor">Sabor</SelectItem>
                           <SelectItem value="strength">Intensidad</SelectItem>
                           <SelectItem value="bitterness">Amargor</SelectItem>
+                          <SelectItem value="origin">Origen</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>

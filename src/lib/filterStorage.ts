@@ -17,6 +17,7 @@ export interface Filters {
   flavor: FilterCategory;
   strength: FilterCategory;
   bitterness: FilterCategory;
+  origin: FilterCategory;
 }
 
 const FILTERS_KEY = "filters_catalog";

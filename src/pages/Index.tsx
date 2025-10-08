@@ -23,12 +23,14 @@ const Index = () => {
     flavor: string[];
     strength: string[];
     bitterness: string[];
+    origin: string[];
   }>({
     style: [],
     color: [],
     flavor: [],
     strength: [],
     bitterness: [],
+    origin: [],
   });
 
   useEffect(() => {
@@ -111,6 +113,7 @@ const Index = () => {
     { id: "flavor", label: "Sabor", icon: "👅" },
     { id: "strength", label: "Fuerza", icon: "💪" },
     { id: "bitterness", label: "Amargor", icon: "😤" },
+    { id: "origin", label: "Origen", icon: "🌎" },
   ];
 
   const getFilterData = (categoryId: string) => {
@@ -128,6 +131,7 @@ const Index = () => {
       flavor: [],
       strength: [],
       bitterness: [],
+      origin: [],
     });
   };
 

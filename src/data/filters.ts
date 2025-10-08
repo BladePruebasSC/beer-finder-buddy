@@ -60,5 +60,25 @@ export const filterCategories = {
       { id: "medium", label: "Medio (30-50 IBU)", icon: "😐" },
       { id: "high", label: "Alto (> 50 IBU)", icon: "😤" },
     ]
+  },
+  origin: {
+    title: "Origen",
+    options: [
+      { id: "República Dominicana", label: "República Dominicana", icon: "🇩🇴" },
+      { id: "Estados Unidos", label: "Estados Unidos", icon: "🇺🇸" },
+      { id: "México", label: "México", icon: "🇲🇽" },
+      { id: "Alemania", label: "Alemania", icon: "🇩🇪" },
+      { id: "Bélgica", label: "Bélgica", icon: "🇧🇪" },
+      { id: "Reino Unido", label: "Reino Unido", icon: "🇬🇧" },
+      { id: "República Checa", label: "República Checa", icon: "🇨🇿" },
+      { id: "Irlanda", label: "Irlanda", icon: "🇮🇪" },
+      { id: "Países Bajos", label: "Países Bajos", icon: "🇳🇱" },
+      { id: "España", label: "España", icon: "🇪🇸" },
+      { id: "Colombia", label: "Colombia", icon: "🇨🇴" },
+      { id: "Brasil", label: "Brasil", icon: "🇧🇷" },
+      { id: "Argentina", label: "Argentina", icon: "🇦🇷" },
+      { id: "Chile", label: "Chile", icon: "🇨🇱" },
+      { id: "Japón", label: "Japón", icon: "🇯🇵" },
+    ]
   }
 };
