@@ -3,6 +3,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BeerCard } from "@/components/BeerCard";
+import { AIChat } from "@/components/AIChat";
+import { BeerAILoader } from "@/components/BeerAILoader";
 import { useBeers } from "@/hooks/useBeers";
 import { Beer as BeerIcon, ArrowLeft, Loader2, Sparkles, MessageCircle } from "lucide-react";
 
@@ -13,6 +15,9 @@ const Catalog = () => {
   const [showContent, setShowContent] = useState(false);
   const [aiMessage, setAiMessage] = useState("");
   const [showAiMessage, setShowAiMessage] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [showSearchLoader, setShowSearchLoader] = useState(false);
+  const [searchFilters, setSearchFilters] = useState<any>(null);
   
   const defaultFilters = {
     style: [],
@@ -85,6 +90,18 @@ const Catalog = () => {
 
   const hasActiveFilters = Object.values(selectedFilters).some((filters: any) => filters.length > 0);
 
+  // Si está mostrando el loader de búsqueda, solo mostrar eso
+  if (showSearchLoader) {
+    return (
+      <BeerAILoader
+        type="search"
+        onComplete={() => {
+          navigate("/catalog", { state: { filters: searchFilters } });
+        }}
+      />
+    );
+  }
+
   useEffect(() => {
     setShowContent(true);
 
@@ -121,10 +138,13 @@ const Catalog = () => {
           showAiMessage ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
         }`}
       >
-        <div className="bg-gradient-to-r from-primary to-accent text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 max-w-2xl">
+        <button
+          onClick={() => setIsChatOpen(true)}
+          className="bg-gradient-to-r from-primary to-accent text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 max-w-2xl hover:shadow-3xl transition-all duration-300 hover:scale-105 cursor-pointer"
+        >
           <MessageCircle className="animate-bounce" size={20} />
           <p className="font-medium">{aiMessage}</p>
-        </div>
+        </button>
       </div>
 
       <div className="container mx-auto px-4 py-8">
@@ -188,6 +208,21 @@ const Catalog = () => {
           </div>
         )}
       </div>
+
+      {/* AI Chat Modal */}
+      <AIChat
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+        onSearch={(filters) => {
+          console.log('📥 Filtros recibidos en Catalog:', filters); // Debug
+          setSearchFilters(filters);
+        }}
+        onStartSearch={() => {
+          setIsChatOpen(false);
+          setShowSearchLoader(true);
+        }}
+      />
+
     </div>
   );
 };

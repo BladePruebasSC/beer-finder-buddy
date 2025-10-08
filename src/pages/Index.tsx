@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { AIChat } from "@/components/AIChat";
 import { getFilters } from "@/lib/filterStorage";
 import { Beer as BeerIcon, Search, Sparkles, X, MessageCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -17,6 +18,9 @@ const Index = () => {
   const [showContent, setShowContent] = useState(false);
   const [aiMessage, setAiMessage] = useState("");
   const [showAiMessage, setShowAiMessage] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [showSearchLoader, setShowSearchLoader] = useState(false);
+  const [searchFilters, setSearchFilters] = useState<any>(null);
   const [selectedFilters, setSelectedFilters] = useState<{
     style: string[];
     color: string[];
@@ -150,6 +154,12 @@ const Index = () => {
     }} />;
   }
 
+  if (showSearchLoader) {
+    return <BeerAILoader type="search" onComplete={() => {
+      navigate("/catalog", { state: { filters: searchFilters } });
+    }} />;
+  }
+
   return (
     <div className={`min-h-screen bg-gradient-to-b from-background via-background to-muted transition-opacity duration-500 ${showContent ? 'opacity-100' : 'opacity-0'}`}>
       <div
@@ -157,10 +167,13 @@ const Index = () => {
           showAiMessage ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
         }`}
       >
-        <div className="bg-gradient-to-r from-primary to-accent text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 max-w-md">
+        <button
+          onClick={() => setIsChatOpen(true)}
+          className="bg-gradient-to-r from-primary to-accent text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 max-w-md hover:shadow-3xl transition-all duration-300 hover:scale-105 cursor-pointer"
+        >
           <MessageCircle className="animate-bounce" size={20} />
           <p className="font-medium">{aiMessage}</p>
-        </div>
+        </button>
       </div>
 
       <section className="relative overflow-hidden">
@@ -176,9 +189,13 @@ const Index = () => {
 
         <div className="relative container mx-auto px-4 py-12 md:py-20">
           <div className="max-w-4xl mx-auto text-center">
-            <div className="inline-flex items-center justify-center w-16 h-16 md:w-20 md:h-20 rounded-full bg-gradient-to-br from-primary to-accent shadow-lg mb-6 animate-pulse">
-              <BeerIcon className="text-primary-foreground" size={32} />
-            </div>
+            <button
+              onClick={() => setIsChatOpen(true)}
+              className="inline-flex items-center justify-center w-16 h-16 md:w-20 md:h-20 rounded-full bg-gradient-to-br from-primary to-accent shadow-lg mb-6 animate-pulse hover:shadow-2xl hover:scale-110 transition-all duration-300 cursor-pointer group"
+              title="Hablar con la IA"
+            >
+              <BeerIcon className="text-primary-foreground group-hover:rotate-12 transition-transform duration-300" size={32} />
+            </button>
             <h1 className="text-4xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
               Beer AI Assistant
             </h1>
@@ -310,6 +327,21 @@ const Index = () => {
           </p>
         </div>
       </footer>
+
+      {/* AI Chat Modal */}
+      <AIChat
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+        onSearch={(filters) => {
+          console.log('📥 Filtros recibidos en Index:', filters); // Debug
+          setSearchFilters(filters);
+        }}
+        onStartSearch={() => {
+          setIsChatOpen(false);
+          setShowSearchLoader(true);
+        }}
+      />
+
     </div>
   );
 };
