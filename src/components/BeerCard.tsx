@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Beer, Droplet, Flame } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface BeerCardProps {
   beer: {
@@ -17,8 +18,13 @@ interface BeerCardProps {
 }
 
 export const BeerCard = ({ beer }: BeerCardProps) => {
+  const navigate = useNavigate();
+  
   return (
-    <Card className="p-5 bg-card border-border shadow-[var(--shadow-soft)] hover:shadow-[var(--shadow-beer)] transition-[var(--transition-smooth)] cursor-pointer group">
+    <Card 
+      className="p-5 bg-card border-border shadow-[var(--shadow-soft)] hover:shadow-[var(--shadow-beer)] transition-[var(--transition-smooth)] cursor-pointer group hover:-translate-y-1"
+      onClick={() => navigate(`/beer/${beer.id}`)}
+    >
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1">
           <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-[var(--transition-smooth)]">

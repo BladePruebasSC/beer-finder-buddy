@@ -8,6 +8,8 @@ export interface Beer {
   color: string;
   flavor: string[];
   description: string;
+  image?: string;
+  origin?: string;
 }
 
 export const beersDatabase: Beer[] = [
