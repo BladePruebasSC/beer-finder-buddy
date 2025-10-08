@@ -14,7 +14,7 @@ const Catalog = () => {
   const [aiMessage, setAiMessage] = useState("");
   const [showAiMessage, setShowAiMessage] = useState(false);
   
-  const selectedFilters = location.state?.filters || {
+  const defaultFilters = {
     style: [],
     color: [],
     flavor: [],
@@ -22,6 +22,21 @@ const Catalog = () => {
     bitterness: [],
     origin: [],
   };
+
+  const selectedFilters = {
+    ...defaultFilters,
+    ...(location.state?.filters || {}),
+  };
+
+  // Asegurar que todas las propiedades sean arrays
+  Object.keys(selectedFilters).forEach(key => {
+    if (!Array.isArray(selectedFilters[key])) {
+      selectedFilters[key] = [];
+    }
+  });
+
+  // Debug: verificar que los filtros estén correctos
+  console.log('[Catalog] selectedFilters:', selectedFilters);
 
   const filteredBeers = useMemo(() => {
     return beers.filter((beer) => {
@@ -74,18 +89,30 @@ const Catalog = () => {
     setShowContent(true);
 
     if (filteredBeers.length > 0) {
-      const messages = [
-        `¡Increíble! Encontré ${filteredBeers.length} cervezas perfectas para ti 🎯`,
-        `He analizado más de 1000 opciones y seleccioné las mejores ${filteredBeers.length} 🧠`,
-        `Mis algoritmos de IA encontraron ${filteredBeers.length} matches perfectos ✨`,
-      ];
+      let messages;
+      
+      if (!hasActiveFilters) {
+        // Mensajes para catálogo completo
+        messages = [
+          `¡Este es el catálogo completo! ${filteredBeers.length} cervezas disponibles 🍺`,
+          `Explora nuestra colección completa de ${filteredBeers.length} cervezas artesanales 🌟`,
+          `Descubre las ${filteredBeers.length} cervezas de nuestro catálogo completo ✨`,
+        ];
+      } else {
+        // Mensajes para búsqueda filtrada
+        messages = [
+          `¡Increíble! Encontré ${filteredBeers.length} cervezas perfectas para ti 🎯`,
+          `He analizado más de 1000 opciones y seleccioné las mejores ${filteredBeers.length} 🧠`,
+          `Mis algoritmos de IA encontraron ${filteredBeers.length} matches perfectos ✨`,
+        ];
+      }
 
       const randomMessage = messages[Math.floor(Math.random() * messages.length)];
       setAiMessage(randomMessage);
       setShowAiMessage(true);
       setTimeout(() => setShowAiMessage(false), 4000);
     }
-  }, [filteredBeers.length]);
+  }, [filteredBeers.length, hasActiveFilters]);
 
   return (
     <div className={`min-h-screen bg-gradient-to-b from-background to-muted transition-opacity duration-700 ${showContent ? 'opacity-100' : 'opacity-0'}`}>
@@ -107,6 +134,7 @@ const Catalog = () => {
             size="icon"
             onClick={() => navigate("/")}
             className="shrink-0"
+            title="Volver al inicio"
           >
             <ArrowLeft size={20} />
           </Button>
@@ -143,7 +171,7 @@ const Catalog = () => {
                 : "No hay cervezas disponibles en el catálogo"}
             </p>
             <Button onClick={() => navigate("/")}>
-              Volver a filtros
+              Volver al inicio
             </Button>
           </div>
         ) : (

@@ -30,10 +30,10 @@ export const BeerCard = ({ beer }: BeerCardProps) => {
       <OptimizedImage
         src={beer.image}
         alt={beer.name}
-        containerClassName="w-full h-48 img-container-gradient overflow-hidden"
-        className="w-full h-full group-hover:scale-105 transition-transform duration-300"
+        containerClassName="beer-image-container h-48 sm:h-56 img-container-gradient"
+        className="beer-image beer-image-transition group-hover:scale-105"
         loading="lazy"
-        objectFit="cover"
+        objectFit="contain"
       />
       
       <div className="p-5">

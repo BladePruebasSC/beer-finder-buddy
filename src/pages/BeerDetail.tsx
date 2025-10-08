@@ -27,7 +27,7 @@ const BeerDetail = () => {
       <div className="min-h-screen bg-gradient-to-b from-background to-muted flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold mb-4">Cerveza no encontrada</h2>
-          <Button onClick={() => navigate("/catalog")}>Volver al catálogo</Button>
+          <Button onClick={() => navigate("/")}>Volver al inicio</Button>
         </div>
       </div>
     );
@@ -38,11 +38,11 @@ const BeerDetail = () => {
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <Button
           variant="outline"
-          onClick={() => navigate("/catalog")}
+          onClick={() => navigate("/")}
           className="mb-6"
         >
           <ArrowLeft className="mr-2" size={16} />
-          Volver al catálogo
+          Volver al inicio
         </Button>
 
         <Card className="overflow-hidden">
@@ -51,10 +51,10 @@ const BeerDetail = () => {
               <OptimizedImage
                 src={beer.image}
                 alt={beer.name}
-                containerClassName="w-full max-w-2xl mx-auto aspect-[16/9] md:aspect-[21/9]"
-                className="w-full h-full"
+                containerClassName="w-full max-w-2xl mx-auto aspect-[16/9] md:aspect-[21/9] img-container-gradient"
+                className="beer-image beer-image-transition"
                 loading="eager"
-                objectFit="cover"
+                objectFit="contain"
               />
             </div>
           )}

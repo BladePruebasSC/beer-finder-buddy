@@ -25,16 +25,16 @@ export const OptimizedImage = ({
 
   if (!src || imageError) {
     return (
-      <div className={`img-placeholder ${containerClassName}`}>
+      <div className={`img-placeholder flex items-center justify-center ${containerClassName}`}>
         {fallbackIcon || <Beer className="text-primary/30" size={64} />}
       </div>
     );
   }
 
   return (
-    <div className={`relative ${containerClassName}`}>
+    <div className={`relative flex items-center justify-center ${containerClassName}`}>
       {!imageLoaded && (
-        <div className="absolute inset-0 img-placeholder animate-pulse">
+        <div className="absolute inset-0 img-placeholder animate-pulse flex items-center justify-center">
           <Beer className="text-primary/20 animate-pulse" size={48} />
         </div>
       )}
@@ -43,7 +43,7 @@ export const OptimizedImage = ({
         alt={alt}
         className={`${className} ${objectFit === "cover" ? "object-cover" : "object-contain"} ${
           imageLoaded ? "opacity-100" : "opacity-0"
-        } transition-opacity duration-300`}
+        } transition-opacity duration-300 max-w-full max-h-full`}
         loading={loading}
         onLoad={() => setImageLoaded(true)}
         onError={() => {

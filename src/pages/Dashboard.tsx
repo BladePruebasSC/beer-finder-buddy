@@ -372,11 +372,11 @@ const Dashboard = () => {
                           <SelectValue placeholder="Selecciona un estilo" />
                         </SelectTrigger>
                         <SelectContent>
-                          {filters.style.options.map((option) => (
+                          {filters.style?.options?.map((option) => (
                             <SelectItem key={option.id} value={option.id}>
                               {option.icon} {option.label}
                             </SelectItem>
-                          ))}
+                          )) || <SelectItem value="" disabled>Cargando...</SelectItem>}
                         </SelectContent>
                       </Select>
                     </div>
@@ -391,11 +391,11 @@ const Dashboard = () => {
                           <SelectValue placeholder="Selecciona un color" />
                         </SelectTrigger>
                         <SelectContent>
-                          {filters.color.options.map((option) => (
+                          {filters.color?.options?.map((option) => (
                             <SelectItem key={option.id} value={option.id}>
                               {option.icon} {option.label}
                             </SelectItem>
-                          ))}
+                          )) || <SelectItem value="" disabled>Cargando...</SelectItem>}
                         </SelectContent>
                       </Select>
                     </div>
@@ -425,33 +425,39 @@ const Dashboard = () => {
                   <div>
                     <Label className="mb-3 block">Sabores * (selecciona uno o varios)</Label>
                     <div className="grid grid-cols-2 gap-3 max-h-48 overflow-y-auto p-3 border rounded-md">
-                      {filters.flavor.options.map((option) => (
-                        <div key={option.id} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`flavor-${option.id}`}
-                            checked={formData.flavor.includes(option.id)}
-                            onCheckedChange={(checked) => {
-                              if (checked) {
-                                setFormData({
-                                  ...formData,
-                                  flavor: [...formData.flavor, option.id]
-                                });
-                              } else {
-                                setFormData({
-                                  ...formData,
-                                  flavor: formData.flavor.filter(f => f !== option.id)
-                                });
-                              }
-                            }}
-                          />
-                          <label
-                            htmlFor={`flavor-${option.id}`}
-                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                          >
-                            {option.icon} {option.label}
-                          </label>
-                        </div>
-                      ))}
+                      {filters.flavor?.options?.length > 0 ? (
+                        filters.flavor.options.map((option) => (
+                          <div key={option.id} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`flavor-${option.id}`}
+                              checked={formData.flavor.includes(option.id)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setFormData({
+                                    ...formData,
+                                    flavor: [...formData.flavor, option.id]
+                                  });
+                                } else {
+                                  setFormData({
+                                    ...formData,
+                                    flavor: formData.flavor.filter(f => f !== option.id)
+                                  });
+                                }
+                              }}
+                            />
+                            <label
+                              htmlFor={`flavor-${option.id}`}
+                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                            >
+                              {option.icon} {option.label}
+                            </label>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="col-span-2 text-sm text-muted-foreground text-center py-4">
+                          Cargando sabores...
+                        </p>
+                      )}
                     </div>
                     {formData.flavor.length === 0 && (
                       <p className="text-xs text-muted-foreground mt-2">
@@ -565,11 +571,13 @@ const Dashboard = () => {
                         <SelectValue placeholder="Selecciona el país de origen" />
                       </SelectTrigger>
                       <SelectContent>
-                        {filters.origin.options.map((option) => (
+                        {filters.origin?.options?.map((option) => (
                           <SelectItem key={option.id} value={option.id}>
                             {option.icon} {option.label}
                           </SelectItem>
-                        ))}
+                        )) || (
+                          <SelectItem value="" disabled>No hay opciones disponibles</SelectItem>
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
@@ -620,10 +628,10 @@ const Dashboard = () => {
                     <OptimizedImage
                       src={beer.image}
                       alt={beer.name}
-                      containerClassName="w-full h-48 img-container-gradient overflow-hidden"
-                      className="w-full h-full group-hover:scale-105 transition-transform duration-300"
+                      containerClassName="beer-image-container h-48 img-container-gradient"
+                      className="beer-image beer-image-transition group-hover:scale-105"
                       loading="lazy"
-                      objectFit="cover"
+                      objectFit="contain"
                     />
                     <div className="p-4">
                       <h3 className="font-bold text-lg mb-1 line-clamp-1">{beer.name}</h3>

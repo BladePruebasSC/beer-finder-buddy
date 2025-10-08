@@ -117,7 +117,9 @@ const Index = () => {
   ];
 
   const getFilterData = (categoryId: string) => {
-    return filters[categoryId as keyof typeof filters];
+    const filterData = filters[categoryId as keyof typeof filters];
+    // Si no existe el filtro (ej: origin en localStorage antiguo), retornar estructura vacía
+    return filterData || { title: categoryId, options: [] };
   };
 
   const getTotalSelectedCount = () => {
@@ -272,7 +274,7 @@ const Index = () => {
           })}
         </div>
 
-        <div className="flex justify-center sticky bottom-6 z-10">
+        <div className="flex flex-col sm:flex-row justify-center items-center gap-4 sticky bottom-6 z-10">
           <Button
             size="lg"
             onClick={handleSearch}
@@ -286,6 +288,16 @@ const Index = () => {
                 {getTotalSelectedCount()}
               </Badge>
             )}
+          </Button>
+          
+          <Button
+            size="lg"
+            variant="outline"
+            onClick={() => navigate("/catalog", { state: { filters: {} } })}
+            className="border-2 border-primary/20 hover:border-primary/40 shadow-lg hover:shadow-xl transition-all duration-300 text-lg px-8 py-6 rounded-full hover:scale-105"
+          >
+            <BeerIcon className="mr-2" size={22} />
+            Ver Catálogo Completo
           </Button>
         </div>
       </section>

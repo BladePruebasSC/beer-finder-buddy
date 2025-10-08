@@ -26,6 +26,19 @@ export const initializeFilters = () => {
   const stored = localStorage.getItem(FILTERS_KEY);
   if (!stored) {
     localStorage.setItem(FILTERS_KEY, JSON.stringify(filterCategories));
+  } else {
+    // Migrar filtros antiguos que no tienen la categoría origin
+    try {
+      const parsedFilters = JSON.parse(stored);
+      if (!parsedFilters.origin) {
+        parsedFilters.origin = filterCategories.origin;
+        localStorage.setItem(FILTERS_KEY, JSON.stringify(parsedFilters));
+      }
+    } catch (error) {
+      // Si hay error parseando, resetear a valores por defecto
+      console.error('Error parsing filters, resetting to defaults:', error);
+      localStorage.setItem(FILTERS_KEY, JSON.stringify(filterCategories));
+    }
   }
 };
 
