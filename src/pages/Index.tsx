@@ -116,33 +116,35 @@ const Index = () => {
 
   // Funciones para manejar el swipe
   const handleTouchStart = (e: React.TouchEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
     const touch = e.touches[0];
     setSwipeY(touch.clientY);
     setIsSwipeActive(true);
-    e.stopPropagation(); // Evitar que afecte otros elementos
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!isSwipeActive) return;
     
+    e.preventDefault();
+    e.stopPropagation();
+    
     const touch = e.touches[0];
     const deltaY = touch.clientY - swipeY;
     
-    // Solo permitir swipe hacia arriba (valores negativos)
-    if (deltaY < 0) {
-      e.preventDefault(); // Evitar scroll de la página
-      e.stopPropagation(); // Evitar que se propague a otros elementos
-      const notification = notificationRef.current;
-      if (notification) {
-        notification.style.transform = `translateY(${deltaY}px)`;
-        notification.style.opacity = `${Math.max(0.1, 1 + deltaY / 80)}`;
-        notification.style.transition = 'none'; // Desactivar transición durante el swipe
-      }
+    const notification = notificationRef.current;
+    if (notification) {
+      notification.style.transform = `translateY(${deltaY}px)`;
+      notification.style.opacity = `${Math.max(0.1, 1 + deltaY / 80)}`;
+      notification.style.transition = 'none';
     }
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
     if (!isSwipeActive) return;
+    
+    e.preventDefault();
+    e.stopPropagation();
     
     const touch = e.changedTouches[0];
     const deltaY = touch.clientY - swipeY;
@@ -161,7 +163,6 @@ const Index = () => {
       }
     }
     
-    e.stopPropagation(); // Evitar que se propague a otros elementos
     setIsSwipeActive(false);
     setSwipeY(0);
   };
@@ -219,16 +220,20 @@ const Index = () => {
     <div className={`min-h-screen bg-gradient-to-b from-background via-background to-muted transition-opacity duration-500 ${showContent ? 'opacity-100' : 'opacity-0'}`}>
       <div
         ref={notificationRef}
-        className={`fixed top-4 left-4 right-4 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 z-40 transition-all duration-500 ${
+        className={`fixed top-4 left-4 right-4 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 z-50 transition-all duration-500 ${
           showAiMessage ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
         }`}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
+        style={{ touchAction: 'pan-y' }}
       >
          <button
            onClick={() => setIsChatOpen(true)}
            className="bg-gradient-to-r from-primary to-accent text-white px-6 sm:px-10 py-4 rounded-3xl shadow-2xl flex items-center gap-4 w-full max-w-none sm:max-w-xl md:max-w-2xl lg:max-w-3xl xl:max-w-4xl hover:shadow-3xl transition-all duration-300 hover:scale-105 cursor-pointer"
+           onTouchStart={(e) => e.stopPropagation()}
+           onTouchMove={(e) => e.stopPropagation()}
+           onTouchEnd={(e) => e.stopPropagation()}
          >
            <MessageCircle className="animate-bounce flex-shrink-0" size={22} />
            <p className="font-medium text-sm sm:text-base md:text-lg leading-relaxed text-left">{aiMessage}</p>
