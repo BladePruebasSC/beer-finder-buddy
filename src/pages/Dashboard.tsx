@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { OptimizedImage } from "@/components/OptimizedImage";
 import { useBeers, useCreateBeer, useUpdateBeer, useDeleteBeer, type Beer } from "@/hooks/useBeers";
 import { getFilters, addFilterOption, updateFilterOption, deleteFilterOption, type FilterOption } from "@/lib/filterStorage";
 import { uploadBeerImage, replaceBeerImage } from "@/lib/uploadImage";
@@ -442,7 +443,7 @@ const Dashboard = () => {
                         )}
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">
-                        JPG, PNG, WEBP o GIF (máx. 5MB)
+                        JPG, PNG, WEBP o GIF (máx. 10MB). Las imágenes se optimizan automáticamente.
                       </p>
                     </div>
 
@@ -475,7 +476,7 @@ const Dashboard = () => {
                     </div>
 
                     {imagePreview && (
-                      <div className="relative w-full h-48 bg-muted rounded-lg overflow-hidden">
+                      <div className="relative w-full h-64 bg-gradient-to-br from-muted to-muted/50 rounded-lg overflow-hidden border-2 border-primary/20">
                         <img
                           src={imagePreview}
                           alt="Preview"
@@ -485,15 +486,17 @@ const Dashboard = () => {
                             toast.error("Error al cargar la imagen");
                           }}
                         />
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="icon"
-                          className="absolute top-2 right-2"
-                          onClick={handleRemoveImage}
-                        >
-                          <X size={16} />
-                        </Button>
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-200">
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="icon"
+                            className="absolute top-2 right-2 shadow-lg"
+                            onClick={handleRemoveImage}
+                          >
+                            <X size={16} />
+                          </Button>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -550,46 +553,51 @@ const Dashboard = () => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {beers.map((beer) => (
-                  <Card key={beer.id} className="p-4">
-                    {beer.image && (
-                      <div className="w-full h-32 bg-muted rounded-md mb-3 overflow-hidden">
-                        <img src={beer.image} alt={beer.name} className="w-full h-full object-cover" />
+                  <Card key={beer.id} className="overflow-hidden group">
+                    <OptimizedImage
+                      src={beer.image}
+                      alt={beer.name}
+                      containerClassName="w-full h-48 img-container-gradient overflow-hidden"
+                      className="w-full h-full group-hover:scale-105 transition-transform duration-300"
+                      loading="lazy"
+                      objectFit="cover"
+                    />
+                    <div className="p-4">
+                      <h3 className="font-bold text-lg mb-1 line-clamp-1">{beer.name}</h3>
+                      <p className="text-sm text-muted-foreground mb-2 line-clamp-1">{beer.brewery}</p>
+                      <div className="flex gap-2 text-xs text-muted-foreground mb-3">
+                        <span>{beer.style}</span>
+                        <span>•</span>
+                        <span>{beer.abv}% ABV</span>
+                        <span>•</span>
+                        <span>{beer.ibu} IBU</span>
                       </div>
-                    )}
-                    <h3 className="font-bold text-lg mb-1">{beer.name}</h3>
-                    <p className="text-sm text-muted-foreground mb-2">{beer.brewery}</p>
-                    <div className="flex gap-2 text-xs text-muted-foreground mb-3">
-                      <span>{beer.style}</span>
-                      <span>•</span>
-                      <span>{beer.abv}% ABV</span>
-                      <span>•</span>
-                      <span>{beer.ibu} IBU</span>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        onClick={() => handleEdit(beer)}
-                        className="flex-1"
-                        disabled={deleteBeerMutation.isPending}
-                      >
-                        <Edit size={14} className="mr-1" />
-                        Editar
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="destructive" 
-                        onClick={() => handleDelete(beer.id)}
-                        className="flex-1"
-                        disabled={deleteBeerMutation.isPending}
-                      >
-                        {deleteBeerMutation.isPending ? (
-                          <Loader2 size={14} className="mr-1 animate-spin" />
-                        ) : (
-                          <Trash2 size={14} className="mr-1" />
-                        )}
-                        Eliminar
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={() => handleEdit(beer)}
+                          className="flex-1"
+                          disabled={deleteBeerMutation.isPending}
+                        >
+                          <Edit size={14} className="mr-1" />
+                          Editar
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="destructive" 
+                          onClick={() => handleDelete(beer.id)}
+                          className="flex-1"
+                          disabled={deleteBeerMutation.isPending}
+                        >
+                          {deleteBeerMutation.isPending ? (
+                            <Loader2 size={14} className="mr-1 animate-spin" />
+                          ) : (
+                            <Trash2 size={14} className="mr-1" />
+                          )}
+                          Eliminar
+                        </Button>
+                      </div>
                     </div>
                   </Card>
                 ))}

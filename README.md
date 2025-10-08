@@ -59,6 +59,50 @@ This project is built with:
 - React
 - shadcn-ui
 - Tailwind CSS
+- Supabase (Backend & Storage)
+
+## Optimizaciones de Imágenes
+
+Este proyecto incluye un sistema completo de optimización de imágenes:
+
+### Características principales:
+
+1. **Compresión automática**: Las imágenes se comprimen automáticamente antes de subirlas, reduciendo el tamaño del archivo mientras mantienen la calidad visual.
+
+2. **Componente OptimizedImage**: Un componente React personalizado que:
+   - Muestra un placeholder animado mientras la imagen carga
+   - Maneja errores de carga automáticamente
+   - Aplica lazy loading para mejorar el rendimiento
+   - Soporta diferentes aspect ratios y modos de ajuste (cover/contain)
+
+3. **Procesamiento de imágenes**:
+   - Redimensionamiento automático (máx. 1920x1920px)
+   - Compresión con calidad 85%
+   - Conversión a JPEG para formatos compatibles
+   - Soporte para GIF sin compresión
+
+4. **Estilos CSS optimizados**:
+   - Clases de utilidad para aspect ratios consistentes
+   - Efectos hover suaves
+   - Placeholders con gradientes para imágenes no cargadas
+   - Renderizado optimizado de imágenes
+
+5. **Caché optimizado**: Las imágenes se sirven con caché de 1 año para máximo rendimiento.
+
+### Uso:
+
+```tsx
+import { OptimizedImage } from "@/components/OptimizedImage";
+
+<OptimizedImage
+  src={imageUrl}
+  alt="Descripción"
+  containerClassName="w-full h-48"
+  className="object-cover"
+  loading="lazy"
+  objectFit="cover"
+/>
+```
 
 ## How can I deploy this project?
 

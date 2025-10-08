@@ -118,4 +118,56 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Optimización para imágenes */
+  img {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+}
+
+@layer utilities {
+  /* Utilidades para imágenes */
+  .img-smooth {
+    image-rendering: auto;
+    image-rendering: smooth;
+  }
+
+  .img-sharp {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+
+  /* Prevenir layout shift con aspect ratios */
+  .aspect-beer {
+    aspect-ratio: 3/4;
+  }
+
+  .aspect-beer-card {
+    aspect-ratio: 16/9;
+  }
+
+  .aspect-beer-hero {
+    aspect-ratio: 21/9;
+  }
+
+  /* Optimización de carga de imágenes */
+  img[loading="lazy"] {
+    content-visibility: auto;
+  }
+
+  /* Efecto hover suave para imágenes */
+  .img-hover-scale {
+    @apply transition-transform duration-300 ease-in-out hover:scale-105;
+  }
+
+  /* Contenedor de imagen con gradiente de fondo */
+  .img-container-gradient {
+    @apply bg-gradient-to-br from-muted to-muted/50;
+  }
+
+  /* Placeholder para imágenes que no cargan */
+  .img-placeholder {
+    @apply bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center;
+  }
 }

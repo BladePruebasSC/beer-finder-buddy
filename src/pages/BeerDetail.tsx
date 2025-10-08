@@ -3,6 +3,7 @@ import { useBeer } from "@/hooks/useBeers";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { OptimizedImage } from "@/components/OptimizedImage";
 import { ArrowLeft, Flame, Droplet, MapPin, Building2, Loader2 } from "lucide-react";
 
 const BeerDetail = () => {
@@ -46,11 +47,14 @@ const BeerDetail = () => {
 
         <Card className="overflow-hidden">
           {beer.image && (
-            <div className="w-full h-64 md:h-96 bg-muted flex items-center justify-center overflow-hidden">
-              <img 
-                src={beer.image} 
+            <div className="w-full">
+              <OptimizedImage
+                src={beer.image}
                 alt={beer.name}
-                className="w-full h-full object-cover"
+                containerClassName="w-full max-w-2xl mx-auto aspect-[16/9] md:aspect-[21/9]"
+                className="w-full h-full"
+                loading="eager"
+                objectFit="cover"
               />
             </div>
           )}
