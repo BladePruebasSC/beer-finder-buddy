@@ -119,6 +119,7 @@ const Index = () => {
     const touch = e.touches[0];
     setSwipeY(touch.clientY);
     setIsSwipeActive(true);
+    e.stopPropagation(); // Evitar que afecte otros elementos
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -129,8 +130,8 @@ const Index = () => {
     
     // Solo permitir swipe hacia arriba (valores negativos)
     if (deltaY < 0) {
-      e.preventDefault();
-      e.stopPropagation();
+      e.preventDefault(); // Evitar scroll de la página
+      e.stopPropagation(); // Evitar que se propague a otros elementos
       const notification = notificationRef.current;
       if (notification) {
         notification.style.transform = `translateY(${deltaY}px)`;
@@ -160,6 +161,7 @@ const Index = () => {
       }
     }
     
+    e.stopPropagation(); // Evitar que se propague a otros elementos
     setIsSwipeActive(false);
     setSwipeY(0);
   };
