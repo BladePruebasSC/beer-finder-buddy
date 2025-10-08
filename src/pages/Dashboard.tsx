@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { OptimizedImage } from "@/components/OptimizedImage";
 import { useBeers, useCreateBeer, useUpdateBeer, useDeleteBeer, type Beer } from "@/hooks/useBeers";
 import { getFilters, addFilterOption, updateFilterOption, deleteFilterOption, type FilterOption } from "@/lib/filterStorage";
@@ -45,7 +46,7 @@ const Dashboard = () => {
     abv: "",
     ibu: "",
     color: "",
-    flavor: "",
+    flavor: [] as string[],
     description: "",
     image: "",
     origin: "",
@@ -91,7 +92,7 @@ const Dashboard = () => {
       abv: "",
       ibu: "",
       color: "",
-      flavor: "",
+      flavor: [],
       description: "",
       image: "",
       origin: "",
@@ -110,7 +111,7 @@ const Dashboard = () => {
       abv: beer.abv.toString(),
       ibu: beer.ibu.toString(),
       color: beer.color,
-      flavor: beer.flavor.join(", "),
+      flavor: beer.flavor,
       description: beer.description,
       image: beer.image || "",
       origin: beer.origin || "",
@@ -150,6 +151,12 @@ const Dashboard = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Validar que haya al menos un sabor seleccionado
+    if (formData.flavor.length === 0) {
+      toast.error("Debes seleccionar al menos un sabor");
+      return;
+    }
+    
     try {
       setIsUploadingImage(true);
       let imageUrl = formData.image || null;
@@ -172,7 +179,7 @@ const Dashboard = () => {
         abv: parseFloat(formData.abv),
         ibu: parseInt(formData.ibu),
         color: formData.color,
-        flavor: formData.flavor.split(",").map(f => f.trim()).filter(f => f),
+        flavor: formData.flavor,
         description: formData.description,
         image: imageUrl,
         origin: formData.origin || null,
@@ -356,21 +363,41 @@ const Dashboard = () => {
                     </div>
                     <div>
                       <Label htmlFor="style">Estilo *</Label>
-                      <Input
-                        id="style"
+                      <Select
                         value={formData.style}
-                        onChange={(e) => setFormData({...formData, style: e.target.value})}
+                        onValueChange={(value) => setFormData({...formData, style: value})}
                         required
-                      />
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecciona un estilo" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {filters.style.options.map((option) => (
+                            <SelectItem key={option.id} value={option.id}>
+                              {option.icon} {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div>
                       <Label htmlFor="color">Color *</Label>
-                      <Input
-                        id="color"
+                      <Select
                         value={formData.color}
-                        onChange={(e) => setFormData({...formData, color: e.target.value})}
+                        onValueChange={(value) => setFormData({...formData, color: value})}
                         required
-                      />
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecciona un color" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {filters.color.options.map((option) => (
+                            <SelectItem key={option.id} value={option.id}>
+                              {option.icon} {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div>
                       <Label htmlFor="abv">ABV (%) *</Label>
@@ -396,14 +423,41 @@ const Dashboard = () => {
                   </div>
                   
                   <div>
-                    <Label htmlFor="flavor">Sabores (separados por comas) *</Label>
-                    <Input
-                      id="flavor"
-                      value={formData.flavor}
-                      onChange={(e) => setFormData({...formData, flavor: e.target.value})}
-                      placeholder="Cítrico, Tropical, Amargo"
-                      required
-                    />
+                    <Label className="mb-3 block">Sabores * (selecciona uno o varios)</Label>
+                    <div className="grid grid-cols-2 gap-3 max-h-48 overflow-y-auto p-3 border rounded-md">
+                      {filters.flavor.options.map((option) => (
+                        <div key={option.id} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`flavor-${option.id}`}
+                            checked={formData.flavor.includes(option.id)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setFormData({
+                                  ...formData,
+                                  flavor: [...formData.flavor, option.id]
+                                });
+                              } else {
+                                setFormData({
+                                  ...formData,
+                                  flavor: formData.flavor.filter(f => f !== option.id)
+                                });
+                              }
+                            }}
+                          />
+                          <label
+                            htmlFor={`flavor-${option.id}`}
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                          >
+                            {option.icon} {option.label}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                    {formData.flavor.length === 0 && (
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Debes seleccionar al menos un sabor
+                      </p>
+                    )}
                   </div>
 
                   <div>
