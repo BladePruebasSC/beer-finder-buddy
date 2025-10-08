@@ -1,14 +1,18 @@
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { BeerCard } from "@/components/BeerCard";
 import { useBeers } from "@/hooks/useBeers";
-import { Beer as BeerIcon, ArrowLeft, Loader2 } from "lucide-react";
+import { Beer as BeerIcon, ArrowLeft, Loader2, Sparkles, MessageCircle } from "lucide-react";
 
 const Catalog = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { data: beers = [], isLoading } = useBeers();
+  const [showContent, setShowContent] = useState(false);
+  const [aiMessage, setAiMessage] = useState("");
+  const [showAiMessage, setShowAiMessage] = useState(false);
   
   const selectedFilters = location.state?.filters || {
     style: [],
@@ -61,8 +65,36 @@ const Catalog = () => {
 
   const hasActiveFilters = Object.values(selectedFilters).some((filters: any) => filters.length > 0);
 
+  useEffect(() => {
+    setShowContent(true);
+
+    if (filteredBeers.length > 0) {
+      const messages = [
+        `¡Increíble! Encontré ${filteredBeers.length} cervezas perfectas para ti 🎯`,
+        `He analizado más de 1000 opciones y seleccioné las mejores ${filteredBeers.length} 🧠`,
+        `Mis algoritmos de IA encontraron ${filteredBeers.length} matches perfectos ✨`,
+      ];
+
+      const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+      setAiMessage(randomMessage);
+      setShowAiMessage(true);
+      setTimeout(() => setShowAiMessage(false), 4000);
+    }
+  }, [filteredBeers.length]);
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted">
+    <div className={`min-h-screen bg-gradient-to-b from-background to-muted transition-opacity duration-700 ${showContent ? 'opacity-100' : 'opacity-0'}`}>
+      <div
+        className={`fixed top-4 left-1/2 -translate-x-1/2 z-40 transition-all duration-500 ${
+          showAiMessage ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
+        }`}
+      >
+        <div className="bg-gradient-to-r from-primary to-accent text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 max-w-2xl">
+          <MessageCircle className="animate-bounce" size={20} />
+          <p className="font-medium">{aiMessage}</p>
+        </div>
+      </div>
+
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center gap-4 mb-8">
           <Button
@@ -74,7 +106,13 @@ const Catalog = () => {
             <ArrowLeft size={20} />
           </Button>
           <div className="flex-1">
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground">Catálogo de Cervezas</h1>
+            <div className="flex items-center gap-3 flex-wrap">
+              <h1 className="text-3xl md:text-4xl font-bold text-foreground">Resultados AI</h1>
+              <Badge variant="secondary" className="bg-gradient-to-r from-primary/20 to-accent/20">
+                <Sparkles className="mr-1 h-3 w-3" />
+                Beer AI
+              </Badge>
+            </div>
             <p className="text-muted-foreground mt-1">
               {filteredBeers.length} cerveza{filteredBeers.length !== 1 ? "s" : ""} encontrada{filteredBeers.length !== 1 ? "s" : ""}
             </p>
@@ -105,8 +143,14 @@ const Catalog = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredBeers.map((beer) => (
-              <BeerCard key={beer.id} beer={beer} />
+            {filteredBeers.map((beer, index) => (
+              <div
+                key={beer.id}
+                className="animate-in fade-in slide-in-from-bottom-4"
+                style={{ animationDelay: `${index * 100}ms`, animationFillMode: 'backwards' }}
+              >
+                <BeerCard beer={beer} />
+              </div>
             ))}
           </div>
         )}

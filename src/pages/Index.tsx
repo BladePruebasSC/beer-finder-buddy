@@ -2,15 +2,21 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getFilters } from "@/lib/filterStorage";
-import { Beer as BeerIcon, Search, Sparkles, X } from "lucide-react";
+import { Beer as BeerIcon, Search, Sparkles, X, MessageCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import heroImage from "@/assets/hero-beer.jpg";
+import { BeerAILoader } from "@/components/BeerAILoader";
 
 const Index = () => {
   const navigate = useNavigate();
   const [secretCode, setSecretCode] = useState("");
   const [filters] = useState(getFilters());
   const [activeCategory, setActiveCategory] = useState<string>("style");
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showContent, setShowContent] = useState(false);
+  const [aiMessage, setAiMessage] = useState("");
+  const [showAiMessage, setShowAiMessage] = useState(false);
   const [selectedFilters, setSelectedFilters] = useState<{
     style: string[];
     color: string[];
@@ -45,6 +51,34 @@ const Index = () => {
     return () => window.removeEventListener("keydown", handleKeyPress);
   }, [navigate]);
 
+  const aiMessages = [
+    "¡Hola! Soy tu sommelier de cervezas con IA 🍺",
+    "Cuéntame, ¿qué tipo de cerveza te apetece hoy?",
+    "Selecciona tus preferencias y encontraré la cerveza perfecta para ti ✨",
+    "¿Prefieres algo ligero o más intenso?",
+    "¡Tengo miles de cervezas en mi base de datos!",
+  ];
+
+  useEffect(() => {
+    let messageIndex = 0;
+    const messageInterval = setInterval(() => {
+      if (showContent) {
+        setAiMessage(aiMessages[messageIndex]);
+        setShowAiMessage(true);
+        setTimeout(() => setShowAiMessage(false), 4000);
+        messageIndex = (messageIndex + 1) % aiMessages.length;
+      }
+    }, 8000);
+
+    if (showContent) {
+      setAiMessage(aiMessages[0]);
+      setShowAiMessage(true);
+      setTimeout(() => setShowAiMessage(false), 4000);
+    }
+
+    return () => clearInterval(messageInterval);
+  }, [showContent]);
+
   const handleFilterToggle = (category: keyof typeof selectedFilters, filterId: string) => {
     setSelectedFilters((prev) => ({
       ...prev,
@@ -52,10 +86,23 @@ const Index = () => {
         ? prev[category].filter((id) => id !== filterId)
         : [...prev[category], filterId],
     }));
+
+    const encouragingMessages = [
+      "¡Excelente elección! Me gusta tu estilo 👌",
+      "Interesante... estoy aprendiendo de tus gustos 🧠",
+      "¡Perfecto! Estoy refinando las recomendaciones ✨",
+      "Mmm, veo que tienes buen gusto 🍺",
+      "¡Me encanta! Sigue explorando 🎯",
+    ];
+
+    const randomMessage = encouragingMessages[Math.floor(Math.random() * encouragingMessages.length)];
+    setAiMessage(randomMessage);
+    setShowAiMessage(true);
+    setTimeout(() => setShowAiMessage(false), 2500);
   };
 
   const handleSearch = () => {
-    navigate("/catalog", { state: { filters: selectedFilters } });
+    setIsSearching(true);
   };
 
   const categories = [
@@ -84,8 +131,32 @@ const Index = () => {
     });
   };
 
+  if (isLoading) {
+    return <BeerAILoader type="initial" onComplete={() => {
+      setIsLoading(false);
+      setTimeout(() => setShowContent(true), 100);
+    }} />;
+  }
+
+  if (isSearching) {
+    return <BeerAILoader type="search" onComplete={() => {
+      navigate("/catalog", { state: { filters: selectedFilters } });
+    }} />;
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted">
+    <div className={`min-h-screen bg-gradient-to-b from-background via-background to-muted transition-opacity duration-500 ${showContent ? 'opacity-100' : 'opacity-0'}`}>
+      <div
+        className={`fixed top-4 left-1/2 -translate-x-1/2 z-40 transition-all duration-500 ${
+          showAiMessage ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
+        }`}
+      >
+        <div className="bg-gradient-to-r from-primary to-accent text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 max-w-md">
+          <MessageCircle className="animate-bounce" size={20} />
+          <p className="font-medium">{aiMessage}</p>
+        </div>
+      </div>
+
       <section className="relative overflow-hidden">
         <div
           className="absolute inset-0 bg-cover bg-center"
@@ -100,10 +171,14 @@ const Index = () => {
               <BeerIcon className="text-primary-foreground" size={32} />
             </div>
             <h1 className="text-4xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
-              Encuentra Tu Cerveza Perfecta
+              Beer AI Assistant
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground mb-6 max-w-2xl mx-auto">
-              Explora y descubre seleccionando tus preferencias
+            <p className="text-lg md:text-xl text-muted-foreground mb-2 max-w-2xl mx-auto">
+              Tu sommelier inteligente de cervezas
+            </p>
+            <p className="text-sm text-muted-foreground/80 mb-6 flex items-center justify-center gap-2">
+              <span className="inline-block w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+              Powered by AI
             </p>
             {getTotalSelectedCount() > 0 && (
               <div className="flex items-center justify-center gap-2 mb-4">
