@@ -1,13 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { CollapsibleFilterSection } from "@/components/CollapsibleFilterSection";
-import { filterCategories } from "@/data/filters";
+import { getFilters } from "@/lib/filterStorage";
 import { Beer as BeerIcon, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import heroImage from "@/assets/hero-beer.jpg";
 
 const Index = () => {
   const navigate = useNavigate();
+  const [secretCode, setSecretCode] = useState("");
+  const [filters] = useState(getFilters());
   const [selectedFilters, setSelectedFilters] = useState<{
     style: string[];
     color: string[];
@@ -21,6 +23,26 @@ const Index = () => {
     strength: [],
     bitterness: [],
   });
+
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      const char = e.key.toUpperCase();
+      if (/^[A-Z]$/.test(char)) {
+        setSecretCode((prev) => {
+          const newCode = (prev + char).slice(-5);
+          if (newCode === "CDERF") {
+            sessionStorage.setItem("dashboard_auth", "true");
+            navigate("/dashboard");
+            return "";
+          }
+          return newCode;
+        });
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyPress);
+    return () => window.removeEventListener("keydown", handleKeyPress);
+  }, [navigate]);
 
   const handleFilterToggle = (category: keyof typeof selectedFilters, filterId: string) => {
     setSelectedFilters((prev) => ({
@@ -69,32 +91,32 @@ const Index = () => {
         
         <div className="space-y-3 mb-8">
           <CollapsibleFilterSection
-            title={filterCategories.style.title}
-            options={filterCategories.style.options}
+            title={filters.style.title}
+            options={filters.style.options}
             selectedFilters={selectedFilters.style}
             onFilterToggle={(filterId) => handleFilterToggle("style", filterId)}
           />
           <CollapsibleFilterSection
-            title={filterCategories.color.title}
-            options={filterCategories.color.options}
+            title={filters.color.title}
+            options={filters.color.options}
             selectedFilters={selectedFilters.color}
             onFilterToggle={(filterId) => handleFilterToggle("color", filterId)}
           />
           <CollapsibleFilterSection
-            title={filterCategories.flavor.title}
-            options={filterCategories.flavor.options}
+            title={filters.flavor.title}
+            options={filters.flavor.options}
             selectedFilters={selectedFilters.flavor}
             onFilterToggle={(filterId) => handleFilterToggle("flavor", filterId)}
           />
           <CollapsibleFilterSection
-            title={filterCategories.strength.title}
-            options={filterCategories.strength.options}
+            title={filters.strength.title}
+            options={filters.strength.options}
             selectedFilters={selectedFilters.strength}
             onFilterToggle={(filterId) => handleFilterToggle("strength", filterId)}
           />
           <CollapsibleFilterSection
-            title={filterCategories.bitterness.title}
-            options={filterCategories.bitterness.options}
+            title={filters.bitterness.title}
+            options={filters.bitterness.options}
             selectedFilters={selectedFilters.bitterness}
             onFilterToggle={(filterId) => handleFilterToggle("bitterness", filterId)}
           />
