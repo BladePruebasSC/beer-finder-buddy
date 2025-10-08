@@ -1,67 +1,94 @@
-import { beersDatabase } from "@/data/beers";
+import { supabase } from "@/integrations/supabase/client";
+import { Tables } from "@/integrations/supabase/types";
 
-export interface Beer {
-  id: string;
-  name: string;
-  brewery: string;
-  style: string;
-  abv: number;
-  ibu: number;
-  color: string;
-  flavor: string[];
-  description: string;
-  image?: string;
-  origin?: string;
-}
+export type Beer = Tables<"beers">;
+export type BeerInsert = Omit<Beer, 'id' | 'created_at' | 'updated_at'>;
 
-const BEERS_KEY = "beers_catalog";
+/**
+ * @deprecated Use useBeers hook instead for better React integration
+ */
+export const getBeersList = async (): Promise<Beer[]> => {
+  const { data, error } = await supabase
+    .from("beers")
+    .select("*")
+    .order("created_at", { ascending: false });
 
-export const initializeBeers = () => {
-  const stored = localStorage.getItem(BEERS_KEY);
-  if (!stored) {
-    localStorage.setItem(BEERS_KEY, JSON.stringify(beersDatabase));
+  if (error) {
+    console.error("Error fetching beers:", error);
+    return [];
   }
+
+  return data as Beer[];
 };
 
-export const getBeersList = (): Beer[] => {
-  initializeBeers();
-  const stored = localStorage.getItem(BEERS_KEY);
-  return stored ? JSON.parse(stored) : [];
+/**
+ * @deprecated Use useBeer hook instead for better React integration
+ */
+export const getBeerById = async (id: string): Promise<Beer | null> => {
+  const { data, error } = await supabase
+    .from("beers")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error) {
+    console.error("Error fetching beer:", error);
+    return null;
+  }
+
+  return data as Beer;
 };
 
-export const getBeerById = (id: string): Beer | null => {
-  const beers = getBeersList();
-  return beers.find(beer => beer.id === id) || null;
+/**
+ * @deprecated Use useCreateBeer hook instead for better React integration
+ */
+export const addBeer = async (beer: BeerInsert): Promise<Beer | null> => {
+  const { data, error } = await supabase
+    .from("beers")
+    .insert([beer])
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error adding beer:", error);
+    return null;
+  }
+
+  return data as Beer;
 };
 
-export const addBeer = (beer: Omit<Beer, "id">): Beer => {
-  const beers = getBeersList();
-  const newBeer = {
-    ...beer,
-    id: Date.now().toString(),
-  };
-  beers.push(newBeer);
-  localStorage.setItem(BEERS_KEY, JSON.stringify(beers));
-  return newBeer;
+/**
+ * @deprecated Use useUpdateBeer hook instead for better React integration
+ */
+export const updateBeer = async (id: string, updates: Partial<BeerInsert>): Promise<Beer | null> => {
+  const { data, error } = await supabase
+    .from("beers")
+    .update(updates)
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error updating beer:", error);
+    return null;
+  }
+
+  return data as Beer;
 };
 
-export const updateBeer = (id: string, updates: Partial<Beer>): Beer | null => {
-  const beers = getBeersList();
-  const index = beers.findIndex(beer => beer.id === id);
-  
-  if (index === -1) return null;
-  
-  beers[index] = { ...beers[index], ...updates };
-  localStorage.setItem(BEERS_KEY, JSON.stringify(beers));
-  return beers[index];
-};
+/**
+ * @deprecated Use useDeleteBeer hook instead for better React integration
+ */
+export const deleteBeer = async (id: string): Promise<boolean> => {
+  const { error } = await supabase
+    .from("beers")
+    .delete()
+    .eq("id", id);
 
-export const deleteBeer = (id: string): boolean => {
-  const beers = getBeersList();
-  const filtered = beers.filter(beer => beer.id !== id);
-  
-  if (filtered.length === beers.length) return false;
-  
-  localStorage.setItem(BEERS_KEY, JSON.stringify(filtered));
+  if (error) {
+    console.error("Error deleting beer:", error);
+    return false;
+  }
+
   return true;
 };

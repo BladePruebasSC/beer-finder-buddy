@@ -1,22 +1,25 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { getBeerById, type Beer } from "@/lib/beerStorage";
+import { useBeer } from "@/hooks/useBeers";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Flame, Droplet, MapPin, Building2 } from "lucide-react";
+import { ArrowLeft, Flame, Droplet, MapPin, Building2, Loader2 } from "lucide-react";
 
 const BeerDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [beer, setBeer] = useState<Beer | null>(null);
+  const { data: beer, isLoading } = useBeer(id);
 
-  useEffect(() => {
-    if (id) {
-      const foundBeer = getBeerById(id);
-      setBeer(foundBeer);
-    }
-  }, [id]);
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-background to-muted flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="animate-spin mx-auto text-primary mb-4" size={48} />
+          <p className="text-muted-foreground">Cargando cerveza...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!beer) {
     return (

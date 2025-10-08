@@ -1,14 +1,14 @@
-import { useState, useMemo, useEffect } from "react";
+import { useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { BeerCard } from "@/components/BeerCard";
-import { getBeersList, type Beer } from "@/lib/beerStorage";
-import { Beer as BeerIcon, ArrowLeft, X } from "lucide-react";
+import { useBeers } from "@/hooks/useBeers";
+import { Beer as BeerIcon, ArrowLeft, Loader2 } from "lucide-react";
 
 const Catalog = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [beers, setBeers] = useState<Beer[]>([]);
+  const { data: beers = [], isLoading } = useBeers();
   
   const selectedFilters = location.state?.filters || {
     style: [],
@@ -18,12 +18,8 @@ const Catalog = () => {
     bitterness: [],
   };
 
-  useEffect(() => {
-    setBeers(getBeersList());
-  }, []);
-
   const filteredBeers = useMemo(() => {
-    return beers.filter((beer: Beer) => {
+    return beers.filter((beer) => {
       if (selectedFilters.style.length > 0 && !selectedFilters.style.includes(beer.style)) {
         return false;
       }
@@ -85,7 +81,12 @@ const Catalog = () => {
           </div>
         </div>
 
-        {filteredBeers.length === 0 ? (
+        {isLoading ? (
+          <div className="text-center py-16">
+            <Loader2 className="animate-spin mx-auto text-primary mb-4" size={48} />
+            <p className="text-muted-foreground">Cargando cervezas...</p>
+          </div>
+        ) : filteredBeers.length === 0 ? (
           <div className="text-center py-16">
             <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-muted mb-6">
               <BeerIcon className="text-muted-foreground" size={40} />

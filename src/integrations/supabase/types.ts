@@ -14,7 +14,53 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      beers: {
+        Row: {
+          id: string
+          name: string
+          brewery: string
+          style: string
+          abv: number
+          ibu: number
+          color: string
+          flavor: string[]
+          description: string
+          image: string | null
+          origin: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          brewery: string
+          style: string
+          abv: number
+          ibu: number
+          color: string
+          flavor: string[]
+          description: string
+          image?: string | null
+          origin?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          brewery?: string
+          style?: string
+          abv?: number
+          ibu?: number
+          color?: string
+          flavor?: string[]
+          description?: string
+          image?: string | null
+          origin?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never

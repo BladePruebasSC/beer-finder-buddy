@@ -8,10 +8,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { getBeersList, addBeer, updateBeer, deleteBeer, type Beer } from "@/lib/beerStorage";
+import { useBeers, useCreateBeer, useUpdateBeer, useDeleteBeer, type Beer } from "@/hooks/useBeers";
 import { getFilters, addFilterOption, updateFilterOption, deleteFilterOption, type FilterOption } from "@/lib/filterStorage";
+import { uploadBeerImage, replaceBeerImage } from "@/lib/uploadImage";
 import { toast } from "sonner";
-import { Trash2, Edit, Plus, LogOut, Beer as BeerIcon, Filter } from "lucide-react";
+import { Trash2, Edit, Plus, LogOut, Beer as BeerIcon, Filter, Loader2, Upload, X } from "lucide-react";
 
 const DASHBOARD_PASSWORD = "CDERF";
 
@@ -19,7 +20,10 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState("");
-  const [beers, setBeers] = useState<Beer[]>([]);
+  const { data: beers = [], isLoading: beersLoading } = useBeers();
+  const createBeerMutation = useCreateBeer();
+  const updateBeerMutation = useUpdateBeer();
+  const deleteBeerMutation = useDeleteBeer();
   const [editingBeer, setEditingBeer] = useState<Beer | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   
@@ -46,17 +50,16 @@ const Dashboard = () => {
     origin: "",
   });
 
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>("");
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+
   useEffect(() => {
     const auth = sessionStorage.getItem("dashboard_auth");
     if (auth === "true") {
       setIsAuthenticated(true);
-      loadBeers();
     }
   }, []);
-
-  const loadBeers = () => {
-    setBeers(getBeersList());
-  };
 
   const loadFilters = () => {
     setFilters(getFilters());
@@ -67,7 +70,6 @@ const Dashboard = () => {
     if (password === DASHBOARD_PASSWORD) {
       sessionStorage.setItem("dashboard_auth", "true");
       setIsAuthenticated(true);
-      loadBeers();
       toast.success("Acceso concedido");
     } else {
       toast.error("Contraseña incorrecta");
@@ -94,6 +96,8 @@ const Dashboard = () => {
       origin: "",
     });
     setEditingBeer(null);
+    setImageFile(null);
+    setImagePreview("");
   };
 
   const handleEdit = (beer: Beer) => {
@@ -110,44 +114,93 @@ const Dashboard = () => {
       image: beer.image || "",
       origin: beer.origin || "",
     });
+    setImagePreview(beer.image || "");
+    setImageFile(null);
     setIsDialogOpen(true);
+  };
+
+  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      // Crear preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+      // Limpiar URL si hay archivo
+      setFormData({ ...formData, image: "" });
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    setImagePreview("");
+    setFormData({ ...formData, image: "" });
   };
 
   const handleDelete = (id: string) => {
     if (window.confirm("¿Estás seguro de eliminar esta cerveza?")) {
-      deleteBeer(id);
-      loadBeers();
-      toast.success("Cerveza eliminada");
+      deleteBeerMutation.mutate(id);
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const beerData = {
-      name: formData.name,
-      brewery: formData.brewery,
-      style: formData.style,
-      abv: parseFloat(formData.abv),
-      ibu: parseInt(formData.ibu),
-      color: formData.color,
-      flavor: formData.flavor.split(",").map(f => f.trim()).filter(f => f),
-      description: formData.description,
-      image: formData.image || undefined,
-      origin: formData.origin || undefined,
-    };
+    try {
+      setIsUploadingImage(true);
+      let imageUrl = formData.image || null;
 
-    if (editingBeer) {
-      updateBeer(editingBeer.id, beerData);
-      toast.success("Cerveza actualizada");
-    } else {
-      addBeer(beerData);
-      toast.success("Cerveza añadida");
+      // Si hay un archivo de imagen, subirlo primero
+      if (imageFile) {
+        if (editingBeer && editingBeer.image) {
+          // Reemplazar imagen existente
+          imageUrl = await replaceBeerImage(imageFile, editingBeer.image, editingBeer.id);
+        } else {
+          // Subir nueva imagen
+          imageUrl = await uploadBeerImage(imageFile);
+        }
+      }
+
+      const beerData = {
+        name: formData.name,
+        brewery: formData.brewery,
+        style: formData.style,
+        abv: parseFloat(formData.abv),
+        ibu: parseInt(formData.ibu),
+        color: formData.color,
+        flavor: formData.flavor.split(",").map(f => f.trim()).filter(f => f),
+        description: formData.description,
+        image: imageUrl,
+        origin: formData.origin || null,
+      };
+
+      if (editingBeer) {
+        updateBeerMutation.mutate(
+          { id: editingBeer.id, updates: beerData },
+          {
+            onSuccess: () => {
+              setIsDialogOpen(false);
+              resetForm();
+            }
+          }
+        );
+      } else {
+        createBeerMutation.mutate(beerData, {
+          onSuccess: () => {
+            setIsDialogOpen(false);
+            resetForm();
+          }
+        });
+      }
+    } catch (error) {
+      console.error("Error al procesar imagen:", error);
+      toast.error(error instanceof Error ? error.message : "Error al subir imagen");
+    } finally {
+      setIsUploadingImage(false);
     }
-
-    loadBeers();
-    setIsDialogOpen(false);
-    resetForm();
   };
 
   const resetFilterForm = () => {
@@ -363,14 +416,86 @@ const Dashboard = () => {
                     />
                   </div>
 
-                  <div>
-                    <Label htmlFor="image">URL de Imagen</Label>
-                    <Input
-                      id="image"
-                      value={formData.image}
-                      onChange={(e) => setFormData({...formData, image: e.target.value})}
-                      placeholder="https://ejemplo.com/imagen.jpg"
-                    />
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="image-file" className="mb-2 block">
+                        Subir Imagen
+                      </Label>
+                      <div className="flex gap-2">
+                        <Input
+                          id="image-file"
+                          type="file"
+                          accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
+                          onChange={handleImageFileChange}
+                          disabled={!!formData.image}
+                          className="flex-1"
+                        />
+                        {imageFile && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            onClick={handleRemoveImage}
+                          >
+                            <X size={16} />
+                          </Button>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        JPG, PNG, WEBP o GIF (máx. 5MB)
+                      </p>
+                    </div>
+
+                    <div className="relative">
+                      <div className="absolute inset-0 flex items-center">
+                        <span className="w-full border-t" />
+                      </div>
+                      <div className="relative flex justify-center text-xs uppercase">
+                        <span className="bg-background px-2 text-muted-foreground">
+                          O
+                        </span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="image">URL de Imagen</Label>
+                      <Input
+                        id="image"
+                        value={formData.image}
+                        onChange={(e) => {
+                          setFormData({...formData, image: e.target.value});
+                          if (e.target.value) {
+                            setImagePreview(e.target.value);
+                            setImageFile(null);
+                          }
+                        }}
+                        placeholder="https://ejemplo.com/imagen.jpg"
+                        disabled={!!imageFile}
+                      />
+                    </div>
+
+                    {imagePreview && (
+                      <div className="relative w-full h-48 bg-muted rounded-lg overflow-hidden">
+                        <img
+                          src={imagePreview}
+                          alt="Preview"
+                          className="w-full h-full object-cover"
+                          onError={() => {
+                            setImagePreview("");
+                            toast.error("Error al cargar la imagen");
+                          }}
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          className="absolute top-2 right-2"
+                          onClick={handleRemoveImage}
+                        >
+                          <X size={16} />
+                        </Button>
+                      </div>
+                    )}
                   </div>
 
                   <div>
@@ -384,8 +509,22 @@ const Dashboard = () => {
                   </div>
 
                   <div className="flex gap-2 pt-4">
-                    <Button type="submit" className="flex-1">
-                      {editingBeer ? "Actualizar" : "Crear"}
+                    <Button 
+                      type="submit" 
+                      className="flex-1"
+                      disabled={createBeerMutation.isPending || updateBeerMutation.isPending || isUploadingImage}
+                    >
+                      {(createBeerMutation.isPending || updateBeerMutation.isPending || isUploadingImage) ? (
+                        <>
+                          <Loader2 className="mr-2 animate-spin" size={16} />
+                          {isUploadingImage ? "Subiendo imagen..." : editingBeer ? "Actualizando..." : "Creando..."}
+                        </>
+                      ) : (
+                        <>
+                          {imageFile && <Upload className="mr-2" size={16} />}
+                          {editingBeer ? "Actualizar" : "Crear"}
+                        </>
+                      )}
                     </Button>
                     <Button 
                       type="button" 
@@ -403,46 +542,59 @@ const Dashboard = () => {
             </Dialog>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {beers.map((beer) => (
-            <Card key={beer.id} className="p-4">
-              {beer.image && (
-                <div className="w-full h-32 bg-muted rounded-md mb-3 overflow-hidden">
-                  <img src={beer.image} alt={beer.name} className="w-full h-full object-cover" />
-                </div>
-              )}
-              <h3 className="font-bold text-lg mb-1">{beer.name}</h3>
-              <p className="text-sm text-muted-foreground mb-2">{beer.brewery}</p>
-              <div className="flex gap-2 text-xs text-muted-foreground mb-3">
-                <span>{beer.style}</span>
-                <span>•</span>
-                <span>{beer.abv}% ABV</span>
-                <span>•</span>
-                <span>{beer.ibu} IBU</span>
+            {beersLoading ? (
+              <div className="text-center py-16">
+                <Loader2 className="animate-spin mx-auto text-primary mb-4" size={48} />
+                <p className="text-muted-foreground">Cargando cervezas...</p>
               </div>
-              <div className="flex gap-2">
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  onClick={() => handleEdit(beer)}
-                  className="flex-1"
-                >
-                  <Edit size={14} className="mr-1" />
-                  Editar
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant="destructive" 
-                  onClick={() => handleDelete(beer.id)}
-                  className="flex-1"
-                >
-                  <Trash2 size={14} className="mr-1" />
-                  Eliminar
-                </Button>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {beers.map((beer) => (
+                  <Card key={beer.id} className="p-4">
+                    {beer.image && (
+                      <div className="w-full h-32 bg-muted rounded-md mb-3 overflow-hidden">
+                        <img src={beer.image} alt={beer.name} className="w-full h-full object-cover" />
+                      </div>
+                    )}
+                    <h3 className="font-bold text-lg mb-1">{beer.name}</h3>
+                    <p className="text-sm text-muted-foreground mb-2">{beer.brewery}</p>
+                    <div className="flex gap-2 text-xs text-muted-foreground mb-3">
+                      <span>{beer.style}</span>
+                      <span>•</span>
+                      <span>{beer.abv}% ABV</span>
+                      <span>•</span>
+                      <span>{beer.ibu} IBU</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={() => handleEdit(beer)}
+                        className="flex-1"
+                        disabled={deleteBeerMutation.isPending}
+                      >
+                        <Edit size={14} className="mr-1" />
+                        Editar
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="destructive" 
+                        onClick={() => handleDelete(beer.id)}
+                        className="flex-1"
+                        disabled={deleteBeerMutation.isPending}
+                      >
+                        {deleteBeerMutation.isPending ? (
+                          <Loader2 size={14} className="mr-1 animate-spin" />
+                        ) : (
+                          <Trash2 size={14} className="mr-1" />
+                        )}
+                        Eliminar
+                      </Button>
+                    </div>
+                  </Card>
+                ))}
               </div>
-            </Card>
-          ))}
-            </div>
+            )}
           </TabsContent>
 
           <TabsContent value="filters">
