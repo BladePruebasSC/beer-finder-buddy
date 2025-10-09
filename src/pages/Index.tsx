@@ -97,13 +97,13 @@ const Index = () => {
 
   const triggerBubbleAnimation = () => {
     setShowBubbleAnimation(true);
-    const newBubbles = Array.from({ length: 8 }, (_, i) => i);
+    const newBubbles = Array.from({ length: 12 }, (_, i) => i);
     setBubbles(newBubbles);
 
     setTimeout(() => {
       setShowBubbleAnimation(false);
       setBubbles([]);
-    }, 2500);
+    }, 2800);
   };
 
   const handleFilterToggle = (category: keyof typeof selectedFilters, filterId: string) => {
@@ -249,13 +249,14 @@ const Index = () => {
       >
          <button
            onClick={() => setIsChatOpen(true)}
-           className="text-white px-6 sm:px-10 py-4 rounded-3xl shadow-2xl flex items-center gap-4 w-full max-w-none sm:max-w-xl md:max-w-2xl lg:max-w-3xl xl:max-w-4xl hover:shadow-3xl transition-all duration-300 hover:scale-105 cursor-pointer"
+           className="foam-notification-content text-foreground px-6 sm:px-10 py-4 rounded-3xl flex items-center gap-4 w-full max-w-none sm:max-w-xl md:max-w-2xl lg:max-w-3xl xl:max-w-4xl hover:shadow-3xl transition-all duration-300 hover:scale-105 cursor-pointer relative overflow-hidden"
            onTouchStart={(e) => e.stopPropagation()}
            onTouchMove={(e) => e.stopPropagation()}
            onTouchEnd={(e) => e.stopPropagation()}
          >
-           <MessageCircle className="animate-bounce flex-shrink-0" size={22} />
-           <p className="font-medium text-sm sm:text-base md:text-lg leading-relaxed text-left">{aiMessage}</p>
+           <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-transparent opacity-50 pointer-events-none"></div>
+           <MessageCircle className="animate-bounce flex-shrink-0 relative z-10 text-amber-900" size={22} />
+           <p className="font-medium text-sm sm:text-base md:text-lg leading-relaxed text-left relative z-10 text-amber-900">{aiMessage}</p>
          </button>
       </div>
 
@@ -272,30 +273,34 @@ const Index = () => {
 
         <div className="relative container mx-auto px-4 py-12 md:py-20">
           <div className="max-w-4xl mx-auto text-center">
-            <div className="relative inline-block">
+            <div className="relative inline-block mb-6">
               <button
                 ref={beerLogoRef}
                 onClick={() => setIsChatOpen(true)}
-                className="inline-flex items-center justify-center w-16 h-16 md:w-20 md:h-20 rounded-full bg-gradient-to-br from-primary to-accent shadow-lg mb-6 hover:shadow-2xl hover:scale-110 transition-all duration-300 cursor-pointer group relative z-10"
+                className="inline-flex items-center justify-center w-16 h-16 md:w-20 md:h-20 rounded-full bg-gradient-to-br from-primary to-accent shadow-lg hover:shadow-2xl hover:scale-110 transition-all duration-300 cursor-pointer group relative z-10 overflow-visible"
                 title="Hablar con la IA"
-                style={{ animation: showBubbleAnimation ? 'beer-icon-pour 1s ease-in-out' : 'gentle-pulse 3s ease-in-out infinite' }}
+                style={{ animation: showBubbleAnimation ? 'beer-icon-pour 1.5s ease-in-out' : 'gentle-pulse 3s ease-in-out infinite' }}
               >
                 <BeerIcon className="text-primary-foreground group-hover:rotate-12 transition-transform duration-300" size={32} />
               </button>
 
-              {showBubbleAnimation && bubbles.map((bubble, index) => (
-                <div
-                  key={bubble}
-                  className="beer-bubble"
-                  style={{
-                    left: '50%',
-                    top: '50%',
-                    animationDelay: `${index * 0.15}s`,
-                    width: `${15 + Math.random() * 15}px`,
-                    height: `${15 + Math.random() * 15}px`,
-                  }}
-                />
-              ))}
+              {showBubbleAnimation && bubbles.map((bubble, index) => {
+                const drift = (Math.random() - 0.5) * 60;
+                const size = 12 + Math.random() * 18;
+                return (
+                  <div
+                    key={bubble}
+                    className="beer-bubble"
+                    style={{
+                      left: '50%',
+                      animationDelay: `${index * 0.1}s`,
+                      width: `${size}px`,
+                      height: `${size}px`,
+                      '--drift': `${drift}px`,
+                    } as React.CSSProperties}
+                  />
+                );
+              })}
             </div>
             <h1 className="text-4xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
               Beer AI Assistant
