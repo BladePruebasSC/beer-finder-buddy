@@ -247,23 +247,14 @@ const Index = () => {
         onTouchEnd={handleTouchEnd}
         style={{ touchAction: 'pan-y' }}
       >
-         <div className="absolute -left-2 top-1/3 w-5 h-5 rounded-full border-2 border-white/60 shadow-lg" style={{ background: 'radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 1), rgba(251, 191, 36, 0.8))' }}></div>
-         <div className="absolute -right-3 top-1/2 w-7 h-7 rounded-full border-2 border-white/60 shadow-lg" style={{ background: 'radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 1), rgba(251, 191, 36, 0.8))' }}></div>
-         <div className="absolute left-8 -bottom-2 w-4 h-4 rounded-full border-2 border-white/60 shadow-lg" style={{ background: 'radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 1), rgba(251, 191, 36, 0.8))' }}></div>
-         <div className="absolute right-12 -bottom-3 w-6 h-6 rounded-full border-2 border-white/60 shadow-lg" style={{ background: 'radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 1), rgba(251, 191, 36, 0.8))' }}></div>
-         <div className="absolute left-1/4 -top-3 w-5 h-5 rounded-full border-2 border-white/60 shadow-lg" style={{ background: 'radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 1), rgba(251, 191, 36, 0.8))' }}></div>
-         <div className="absolute right-1/3 -top-4 w-4 h-4 rounded-full border-2 border-white/60 shadow-lg" style={{ background: 'radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 1), rgba(251, 191, 36, 0.8))' }}></div>
-         <div className="absolute left-16 -top-2 w-3 h-3 rounded-full border-2 border-white/60 shadow-lg" style={{ background: 'radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 1), rgba(251, 191, 36, 0.8))' }}></div>
-         <div className="absolute right-20 -bottom-1 w-3 h-3 rounded-full border-2 border-white/60 shadow-lg" style={{ background: 'radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 1), rgba(251, 191, 36, 0.8))' }}></div>
-
          <button
            onClick={() => setIsChatOpen(true)}
-           className="foam-notification-content text-foreground px-6 sm:px-10 py-4 rounded-3xl flex items-center gap-4 w-full max-w-none sm:max-w-xl md:max-w-2xl lg:max-w-3xl xl:max-w-4xl hover:shadow-3xl transition-all duration-300 hover:scale-105 cursor-pointer relative overflow-visible"
+           className="foam-notification-content text-foreground px-6 sm:px-10 py-4 rounded-3xl flex items-center gap-4 w-full max-w-none sm:max-w-xl md:max-w-2xl lg:max-w-3xl xl:max-w-4xl hover:shadow-3xl transition-all duration-300 hover:scale-105 cursor-pointer relative overflow-hidden"
            onTouchStart={(e) => e.stopPropagation()}
            onTouchMove={(e) => e.stopPropagation()}
            onTouchEnd={(e) => e.stopPropagation()}
          >
-           <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-transparent opacity-50 pointer-events-none rounded-3xl"></div>
+           <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-transparent opacity-50 pointer-events-none"></div>
            <MessageCircle className="animate-bounce flex-shrink-0 relative z-10 text-amber-900" size={22} />
            <p className="font-medium text-sm sm:text-base md:text-lg leading-relaxed text-left relative z-10 text-amber-900">{aiMessage}</p>
          </button>
@@ -286,23 +277,22 @@ const Index = () => {
               <button
                 ref={beerLogoRef}
                 onClick={() => setIsChatOpen(true)}
-                className="inline-flex items-center justify-center w-28 h-28 md:w-36 md:h-36 rounded-full bg-gradient-to-br from-primary to-accent shadow-lg hover:shadow-2xl hover:scale-110 transition-all duration-300 cursor-pointer group relative z-10 overflow-visible"
+                className="inline-flex items-center justify-center w-16 h-16 md:w-20 md:h-20 rounded-full bg-gradient-to-br from-primary to-accent shadow-lg hover:shadow-2xl hover:scale-110 transition-all duration-300 cursor-pointer group relative z-10 overflow-visible"
                 title="Hablar con la IA"
                 style={{ animation: showBubbleAnimation ? 'beer-icon-pour 1.5s ease-in-out' : 'gentle-pulse 3s ease-in-out infinite' }}
               >
-                <BeerIcon className="text-primary-foreground group-hover:rotate-12 transition-transform duration-300" size={56} />
+                <BeerIcon className="text-primary-foreground group-hover:rotate-12 transition-transform duration-300" size={32} />
               </button>
 
               {showBubbleAnimation && bubbles.map((bubble, index) => {
-                const drift = (Math.random() - 0.5) * 80;
-                const size = 14 + Math.random() * 20;
+                const drift = (Math.random() - 0.5) * 60;
+                const size = 12 + Math.random() * 18;
                 return (
                   <div
                     key={bubble}
                     className="beer-bubble"
                     style={{
                       left: '50%',
-                      top: '-30px',
                       animationDelay: `${index * 0.1}s`,
                       width: `${size}px`,
                       height: `${size}px`,
