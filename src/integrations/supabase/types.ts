@@ -61,6 +61,38 @@ export type Database = {
           updated_at?: string
         }
       }
+      reviews: {
+        Row: {
+          id: string
+          beer_id: string
+          user_name: string
+          rating: number
+          comment: string
+          approved: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          beer_id: string
+          user_name: string
+          rating: number
+          comment: string
+          approved?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          beer_id?: string
+          user_name?: string
+          rating?: number
+          comment?: string
+          approved?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never
