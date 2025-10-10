@@ -254,32 +254,30 @@ const Index = () => {
 
   return (
     <div className={`min-h-screen bg-gradient-to-b from-background via-background to-muted transition-opacity duration-500 ${showContent ? 'opacity-100' : 'opacity-0'}`}>
-      <div
-        ref={notificationRef}
-        className={`fixed top-4 left-4 right-4 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 z-50 transition-all ${
-          showAiMessage && !isNotificationExiting
-            ? "notification-from-foam"
-            : isNotificationExiting
-            ? "notification-exit"
-            : "-translate-y-full opacity-0"
-        }`}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        style={{ touchAction: 'pan-y' }}
-      >
-         <button
-           onClick={() => setIsChatOpen(true)}
-           className="foam-notification-content text-foreground px-6 sm:px-10 py-4 rounded-3xl flex items-center gap-4 w-full max-w-none sm:max-w-xl md:max-w-2xl lg:max-w-3xl xl:max-w-4xl hover:shadow-3xl transition-all duration-300 hover:scale-105 cursor-pointer relative overflow-hidden"
-           onTouchStart={(e) => e.stopPropagation()}
-           onTouchMove={(e) => e.stopPropagation()}
-           onTouchEnd={(e) => e.stopPropagation()}
-         >
-           <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-transparent opacity-50 pointer-events-none"></div>
-           <MessageCircle className="animate-bounce flex-shrink-0 relative z-10 text-amber-900" size={22} />
-           <p className="font-medium text-sm sm:text-base md:text-lg leading-relaxed text-left relative z-10 text-amber-900">{aiMessage}</p>
-         </button>
-      </div>
+      {showAiMessage && (
+        <div
+          ref={notificationRef}
+          className={`fixed top-4 left-1/2 z-50 w-[calc(100%-2rem)] max-w-xl sm:max-w-2xl md:max-w-3xl ${
+            isNotificationExiting ? "notification-exit" : "notification-from-foam"
+          }`}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          style={{ touchAction: 'pan-y' }}
+        >
+          <button
+            onClick={() => setIsChatOpen(true)}
+            className="foam-notification-content text-foreground px-4 sm:px-6 md:px-10 py-3 sm:py-4 rounded-3xl flex items-center gap-3 sm:gap-4 w-full hover:shadow-3xl transition-all duration-300 hover:scale-105 cursor-pointer relative overflow-hidden"
+            onTouchStart={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
+            onTouchEnd={(e) => e.stopPropagation()}
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-transparent opacity-50 pointer-events-none"></div>
+            <MessageCircle className="animate-bounce flex-shrink-0 relative z-10 text-amber-900" size={20} />
+            <p className="font-medium text-xs sm:text-sm md:text-base leading-relaxed text-left relative z-10 text-amber-900 line-clamp-2">{aiMessage}</p>
+          </button>
+        </div>
+      )}
 
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 overflow-hidden">

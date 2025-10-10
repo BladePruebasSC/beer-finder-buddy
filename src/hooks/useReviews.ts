@@ -43,7 +43,7 @@ export const useBeerRating = (beerId: string | undefined) => {
         .from("reviews")
         .select("rating")
         .eq("beer_id", beerId)
-        .eq("approved", true); // Solo contar reseñas aprobadas
+        .eq("approved", true);
 
       if (error) {
         console.error("Error fetching rating:", error);
@@ -58,7 +58,7 @@ export const useBeerRating = (beerId: string | undefined) => {
       }
 
       const totalReviews = data.length;
-      const sumRatings = data.reduce((sum, review) => sum + review.rating, 0);
+      const sumRatings = data.reduce((sum: number, review: any) => sum + review.rating, 0);
       const averageRating = sumRatings / totalReviews;
 
       return {
@@ -88,7 +88,7 @@ export const useAllBeerRatings = () => {
       // Agrupar por beer_id y calcular promedios
       const ratingsMap = new Map<string, { sum: number; count: number }>();
       
-      data?.forEach((review) => {
+      data?.forEach((review: any) => {
         const existing = ratingsMap.get(review.beer_id);
         if (existing) {
           existing.sum += review.rating;
@@ -148,6 +148,7 @@ export const useApproveReview = () => {
     mutationFn: async (reviewId: string) => {
       const { data, error } = await supabase
         .from("reviews")
+        // @ts-ignore - Tables not yet in generated types
         .update({ approved: true })
         .eq("id", reviewId)
         .select()
@@ -206,6 +207,7 @@ export const useCreateReview = () => {
     mutationFn: async (review: ReviewInsert) => {
       const { data, error } = await supabase
         .from("reviews")
+        // @ts-ignore - Tables not yet in generated types
         .insert(review)
         .select()
         .single();

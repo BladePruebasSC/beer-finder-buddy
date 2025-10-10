@@ -42,6 +42,7 @@ export const getBeerById = async (id: string): Promise<Beer | null> => {
 export const addBeer = async (beer: BeerInsert): Promise<Beer | null> => {
   const { data, error } = await supabase
     .from("beers")
+    // @ts-ignore - Tables not yet in generated types
     .insert([beer])
     .select()
     .single();
@@ -60,6 +61,7 @@ export const addBeer = async (beer: BeerInsert): Promise<Beer | null> => {
 export const updateBeer = async (id: string, updates: Partial<BeerInsert>): Promise<Beer | null> => {
   const { data, error } = await supabase
     .from("beers")
+    // @ts-ignore - Tables not yet in generated types
     .update(updates)
     .eq("id", id)
     .select()

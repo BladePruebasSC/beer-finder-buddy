@@ -59,6 +59,7 @@ export const useCreateBeer = () => {
     mutationFn: async (beer: BeerInsert) => {
       const { data, error } = await supabase
         .from("beers")
+        // @ts-ignore - Tables not yet in generated types
         .insert([beer])
         .select()
         .single();
@@ -85,6 +86,7 @@ export const useUpdateBeer = () => {
     mutationFn: async ({ id, updates }: { id: string; updates: BeerUpdate }) => {
       const { data, error } = await supabase
         .from("beers")
+        // @ts-ignore - Tables not yet in generated types
         .update(updates)
         .eq("id", id)
         .select()

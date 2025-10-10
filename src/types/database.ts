@@ -7,10 +7,10 @@ export interface Beer {
   abv: number;
   ibu: number | null;
   color: string;
-  flavor: string;
+  flavor: string[];
   description: string;
   image: string | null;
-  origin: string;
+  origin: string | null;
   created_at: string;
   updated_at: string;
 }
