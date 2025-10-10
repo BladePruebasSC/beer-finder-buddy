@@ -25,25 +25,29 @@ export const OptimizedImage = ({
   const [shouldLoad, setShouldLoad] = useState(loading === "eager");
   const containerRef = useRef<HTMLDivElement>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
+  const hasLoadedRef = useRef(false); // Prevenir re-renders innecesarios
 
   // Intersection Observer optimizado para móviles
   useEffect(() => {
-    if (!containerRef.current || loading === "eager" || shouldLoad) return;
+    // Si ya cargó una vez, nunca volver a observar
+    if (!containerRef.current || loading === "eager" || hasLoadedRef.current) return;
 
     observerRef.current = new IntersectionObserver(
       ([entry]) => {
-        // Una vez que entra en vista, cargar la imagen y nunca volver a cambiar
-        if (entry.isIntersecting) {
+        // Una vez que entra en vista, cargar la imagen y marcar como cargada permanentemente
+        if (entry.isIntersecting && !hasLoadedRef.current) {
+          hasLoadedRef.current = true;
           setShouldLoad(true);
           // Desconectar inmediatamente para evitar re-renders
           if (observerRef.current) {
             observerRef.current.disconnect();
+            observerRef.current = null;
           }
         }
       },
       {
         threshold: 0.01, // Detectar muy pronto
-        rootMargin: '200px', // Cargar mucho antes de que sea visible (especialmente para scroll rápido)
+        rootMargin: '300px', // Cargar mucho antes de que sea visible
       }
     );
 
@@ -52,9 +56,10 @@ export const OptimizedImage = ({
     return () => {
       if (observerRef.current) {
         observerRef.current.disconnect();
+        observerRef.current = null;
       }
     };
-  }, [loading, shouldLoad, src]);
+  }, []); // Solo ejecutar una vez al montar
 
   if (!src || imageError) {
     return (
@@ -79,8 +84,8 @@ export const OptimizedImage = ({
         </div>
       )}
       
-      {/* Imagen - siempre renderizada una vez que shouldLoad es true */}
-      {shouldLoad && (
+      {/* Imagen - siempre renderizada una vez que shouldLoad es true, NUNCA se desmonta */}
+      {(shouldLoad || hasLoadedRef.current) && (
         <img
           src={src}
           alt={alt}
@@ -101,6 +106,8 @@ export const OptimizedImage = ({
           style={{
             contentVisibility: 'auto',
             willChange: imageLoaded ? 'auto' : 'opacity',
+            // Mantener en memoria la imagen
+            contain: 'layout style paint',
           }}
         />
       )}
