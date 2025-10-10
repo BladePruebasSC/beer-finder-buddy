@@ -18,7 +18,7 @@ interface BeerCardProps {
     flavor: string[];
     description: string;
     image?: string | null;
-    status?: 'activo' | 'agotado';
+    status?: 'disponible' | 'agotado';
   };
 }
 
@@ -48,9 +48,9 @@ export const BeerCard = ({ beer }: BeerCardProps) => {
             </Badge>
           </div>
         )}
-        {beer.status === 'activo' && (
+        {beer.status === 'disponible' && (
           <Badge variant="default" className="absolute top-2 right-2 shadow-lg">
-            ✅ Activo
+            ✅ Disponible
           </Badge>
         )}
       </div>

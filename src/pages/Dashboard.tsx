@@ -52,7 +52,7 @@ const Dashboard = () => {
     description: "",
     image: "",
     origin: "",
-    status: "activo" as "activo" | "agotado",
+    status: "disponible" as "disponible" | "agotado",
   });
 
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -99,7 +99,7 @@ const Dashboard = () => {
       description: "",
       image: "",
       origin: "",
-      status: "activo",
+      status: "disponible",
     });
     setEditingBeer(null);
     setImageFile(null);
@@ -119,7 +119,7 @@ const Dashboard = () => {
       description: beer.description,
       image: beer.image || "",
       origin: beer.origin || "",
-      status: beer.status || "activo",
+      status: beer.status || "disponible",
     });
     setImagePreview(beer.image || "");
     setImageFile(null);
@@ -154,7 +154,7 @@ const Dashboard = () => {
   };
 
   const handleToggleStatus = (beer: Beer) => {
-    const newStatus = beer.status === 'activo' ? 'agotado' : 'activo';
+    const newStatus = beer.status === 'disponible' ? 'agotado' : 'disponible';
     updateBeerMutation.mutate(
       { id: beer.id, updates: { status: newStatus } },
       {
@@ -615,14 +615,14 @@ const Dashboard = () => {
                       <Label htmlFor="status">Estado *</Label>
                       <Select
                         value={formData.status}
-                        onValueChange={(value) => setFormData({...formData, status: value as "activo" | "agotado"})}
+                        onValueChange={(value) => setFormData({...formData, status: value as "disponible" | "agotado"})}
                         required
                       >
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="activo">✅ Activo</SelectItem>
+                          <SelectItem value="disponible">✅ Disponible</SelectItem>
                           <SelectItem value="agotado">❌ Agotado</SelectItem>
                         </SelectContent>
                       </Select>
@@ -684,10 +684,10 @@ const Dashboard = () => {
                       <div className="flex items-start justify-between gap-2 mb-1">
                         <h3 className="font-bold text-lg line-clamp-1 flex-1">{beer.name}</h3>
                         <Badge 
-                          variant={beer.status === 'activo' ? 'default' : 'destructive'}
+                          variant={beer.status === 'disponible' ? 'default' : 'destructive'}
                           className="flex-shrink-0"
                         >
-                          {beer.status === 'activo' ? '✅ Activo' : '❌ Agotado'}
+                          {beer.status === 'disponible' ? '✅ Disponible' : '❌ Agotado'}
                         </Badge>
                       </div>
                       <p className="text-sm text-muted-foreground mb-2 line-clamp-1">{beer.brewery}</p>
@@ -701,12 +701,12 @@ const Dashboard = () => {
                       <div className="flex gap-2 mb-2">
                         <Button 
                           size="sm" 
-                          variant={beer.status === 'activo' ? 'outline' : 'default'}
+                          variant={beer.status === 'disponible' ? 'outline' : 'default'}
                           onClick={() => handleToggleStatus(beer)}
                           className="flex-1"
                           disabled={updateBeerMutation.isPending}
                         >
-                          {beer.status === 'activo' ? '❌ Marcar Agotado' : '✅ Marcar Activo'}
+                          {beer.status === 'disponible' ? '❌ Marcar Agotado' : '✅ Marcar Disponible'}
                         </Button>
                       </div>
                       <div className="flex gap-2">

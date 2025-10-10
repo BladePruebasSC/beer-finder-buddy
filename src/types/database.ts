@@ -11,7 +11,7 @@ export interface Beer {
   description: string;
   image: string | null;
   origin: string | null;
-  status: 'activo' | 'agotado';
+  status: 'disponible' | 'agotado';
   created_at: string;
   updated_at: string;
 }

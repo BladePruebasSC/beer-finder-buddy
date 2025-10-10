@@ -295,7 +295,7 @@ const Index = () => {
           <div className="absolute inset-0 bg-gradient-to-b from-background/95 via-background/90 to-background"></div>
         </div>
 
-        <div className="relative container mx-auto px-4 py-12 md:py-20">
+        <div className="relative container mx-auto px-4 pt-24 pb-12 md:pt-32 md:pb-20">
           <div className="max-w-4xl mx-auto text-center">
             <div className="relative inline-block mb-6">
               <button

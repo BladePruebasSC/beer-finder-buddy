@@ -3,9 +3,40 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { X, Send, MessageCircle, Bot, User } from "lucide-react";
+import { X, Send, MessageCircle, Bot, User, TrendingUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { BeerAILoader } from "@/components/BeerAILoader";
+
+// Sistema de tracking de respuestas más utilizadas
+const ANSWER_STATS_KEY = 'beer-ai-answer-stats';
+
+interface AnswerStats {
+  [answer: string]: number;
+}
+
+const getAnswerStats = (): AnswerStats => {
+  try {
+    const stored = localStorage.getItem(ANSWER_STATS_KEY);
+    return stored ? JSON.parse(stored) : {};
+  } catch {
+    return {};
+  }
+};
+
+const updateAnswerStats = (answer: string) => {
+  const stats = getAnswerStats();
+  stats[answer] = (stats[answer] || 0) + 1;
+  localStorage.setItem(ANSWER_STATS_KEY, JSON.stringify(stats));
+};
+
+const sortAnswersByPopularity = (answers: string[]): string[] => {
+  const stats = getAnswerStats();
+  return [...answers].sort((a, b) => {
+    const countA = stats[a] || 0;
+    const countB = stats[b] || 0;
+    return countB - countA; // Orden descendente (más usadas primero)
+  });
+};
 
 interface Message {
   id: string;
@@ -101,7 +132,10 @@ export const AIChat = ({ isOpen, onClose, onSearch, onStartSearch }: AIChatProps
   const [answerKey, setAnswerKey] = useState(0);
   const [isTyping, setIsTyping] = useState(false);
   const [showSearchLoader, setShowSearchLoader] = useState(false);
+  const [lastActivityTime, setLastActivityTime] = useState<number>(Date.now());
+  const [sortedAnswers, setSortedAnswers] = useState<string[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
   const navigate = useNavigate();
 
   const scrollToBottom = () => {
@@ -109,6 +143,34 @@ export const AIChat = ({ isOpen, onClose, onSearch, onStartSearch }: AIChatProps
     if (!showAnswers || messages.length <= 2) {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
+  };
+
+  const resetChat = () => {
+    setMessages([
+      {
+        id: '1',
+        type: 'ai',
+        content: conversationSteps.initial.question,
+        timestamp: new Date()
+      }
+    ]);
+    setCurrentStep('initial');
+    setSelectedFilters({
+      style: [],
+      color: [],
+      flavor: [],
+      strength: [],
+      bitterness: [],
+      origin: []
+    });
+    setShowAnswers(false);
+    setAnswerKey(prev => prev + 1);
+    setIsTyping(false);
+    setLastActivityTime(Date.now());
+  };
+
+  const updateActivity = () => {
+    setLastActivityTime(Date.now());
   };
 
   useEffect(() => {
@@ -134,6 +196,53 @@ export const AIChat = ({ isOpen, onClose, onSearch, onStartSearch }: AIChatProps
       return () => clearTimeout(timer);
     }
   }, [isOpen, currentStep]);
+
+  // Reiniciar chat después de 10 segundos de inactividad
+  useEffect(() => {
+    if (!isOpen) return;
+
+    // Limpiar timer anterior si existe
+    if (inactivityTimerRef.current) {
+      clearTimeout(inactivityTimerRef.current);
+    }
+
+    // Crear nuevo timer
+    inactivityTimerRef.current = setTimeout(() => {
+      const timeSinceLastActivity = Date.now() - lastActivityTime;
+      if (timeSinceLastActivity >= 10000) {
+        // 10 segundos de inactividad
+        resetChat();
+        // Mostrar respuestas iniciales después del reset
+        setTimeout(() => {
+          setShowAnswers(true);
+        }, 600);
+      }
+    }, 10000);
+
+    // Cleanup al desmontar o cuando cambie la dependencia
+    return () => {
+      if (inactivityTimerRef.current) {
+        clearTimeout(inactivityTimerRef.current);
+      }
+    };
+  }, [isOpen, lastActivityTime]);
+
+  // Ordenar respuestas por popularidad cuando cambia el paso
+  useEffect(() => {
+    if (conversationSteps[currentStep]) {
+      const answers = conversationSteps[currentStep].answers;
+      const sorted = sortAnswersByPopularity(answers);
+      setSortedAnswers(sorted);
+    }
+  }, [currentStep, answerKey]);
+
+  // Reiniciar conversación cuando se abre el chat
+  useEffect(() => {
+    if (isOpen) {
+      // Resetear el chat a su estado inicial
+      resetChat();
+    }
+  }, [isOpen]);
 
   const addMessage = (type: 'ai' | 'user', content: string) => {
     const newMessage: Message = {
@@ -170,6 +279,12 @@ export const AIChat = ({ isOpen, onClose, onSearch, onStartSearch }: AIChatProps
   };
 
   const handlePredefinedAnswer = (answer: string) => {
+    // Actualizar actividad
+    updateActivity();
+    
+    // Registrar la respuesta en las estadísticas
+    updateAnswerStats(answer);
+    
     // Ocultar respuestas inmediatamente
     setShowAnswers(false);
     
@@ -335,7 +450,7 @@ export const AIChat = ({ isOpen, onClose, onSearch, onStartSearch }: AIChatProps
           ))}
 
           {/* Predefined Answers */}
-          {conversationSteps[currentStep] && showAnswers && (
+          {conversationSteps[currentStep] && showAnswers && sortedAnswers.length > 0 && (
             <div className="space-y-4" key={answerKey}>
               <div className="text-center animate-in fade-in duration-500">
                 <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20">
@@ -344,24 +459,45 @@ export const AIChat = ({ isOpen, onClose, onSearch, onStartSearch }: AIChatProps
                 </div>
               </div>
               <div className="grid grid-cols-1 gap-3">
-                {conversationSteps[currentStep].answers.map((answer, index) => (
-                  <Button
-                    key={`${answerKey}-${index}`}
-                    variant="outline"
-                    size="lg"
-                    onClick={() => handlePredefinedAnswer(answer)}
-                    className="group justify-start text-left h-auto py-4 px-4 rounded-2xl border-2 border-border/50 hover:border-primary/50 hover:bg-gradient-to-r hover:from-primary/5 hover:to-accent/5 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg bg-gradient-to-r from-background to-background/50 cascade-animation"
-                  >
-                    <div className="flex items-center gap-3 w-full">
-                      <div className="text-lg group-hover:scale-110 transition-transform duration-200">
-                        {answer.split(' ')[0]}
+                {sortedAnswers.map((answer, index) => {
+                  const stats = getAnswerStats();
+                  const count = stats[answer] || 0;
+                  const isPopular = count > 0;
+                  
+                  return (
+                    <Button
+                      key={`${answerKey}-${index}`}
+                      variant="outline"
+                      size="lg"
+                      onClick={() => handlePredefinedAnswer(answer)}
+                      className={`group justify-start text-left h-auto py-4 px-4 rounded-2xl border-2 ${
+                        isPopular && index === 0 
+                          ? 'border-primary/30 bg-gradient-to-r from-primary/10 to-accent/10' 
+                          : 'border-border/50'
+                      } hover:border-primary/50 hover:bg-gradient-to-r hover:from-primary/5 hover:to-accent/5 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg cascade-animation relative`}
+                    >
+                      {isPopular && index === 0 && (
+                        <div className="absolute -top-2 -right-2 bg-gradient-to-r from-primary to-accent text-white text-[10px] px-2 py-1 rounded-full font-bold shadow-lg flex items-center gap-1">
+                          <TrendingUp size={10} />
+                          Popular
+                        </div>
+                      )}
+                      <div className="flex items-center gap-3 w-full">
+                        <div className="text-lg group-hover:scale-110 transition-transform duration-200">
+                          {answer.split(' ')[0]}
+                        </div>
+                        <span className="font-medium text-sm group-hover:text-primary transition-colors duration-200 flex-1">
+                          {answer.split(' ').slice(1).join(' ')}
+                        </span>
+                        {count > 0 && (
+                          <Badge variant="secondary" className="text-[10px] px-2 py-0.5 bg-muted">
+                            {count}x
+                          </Badge>
+                        )}
                       </div>
-                      <span className="font-medium text-sm group-hover:text-primary transition-colors duration-200">
-                        {answer.split(' ').slice(1).join(' ')}
-                      </span>
-                    </div>
-                  </Button>
-                ))}
+                    </Button>
+                  );
+                })}
               </div>
             </div>
           )}
