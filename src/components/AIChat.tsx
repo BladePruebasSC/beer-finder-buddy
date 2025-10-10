@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { X, Send, MessageCircle, Bot, User, TrendingUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { BeerAILoader } from "@/components/BeerAILoader";
+import { updateFilterStats, getFilterStats } from "@/lib/filterStats";
 
 // Sistema de tracking de respuestas más utilizadas
 const ANSWER_STATS_KEY = 'beer-ai-answer-stats';
@@ -29,27 +30,16 @@ const updateAnswerStats = (answer: string) => {
   localStorage.setItem(ANSWER_STATS_KEY, JSON.stringify(stats));
 };
 
-// Sistema de tracking de FILTROS reales (no respuestas del chat)
-const updateFilterStats = (filterValue: string) => {
-  const FILTER_STATS_KEY = 'beer-filter-stats';
-  try {
-    const stored = localStorage.getItem(FILTER_STATS_KEY);
-    const stats = stored ? JSON.parse(stored) : {};
-    stats[filterValue] = (stats[filterValue] || 0) + 1;
-    localStorage.setItem(FILTER_STATS_KEY, JSON.stringify(stats));
-  } catch (error) {
-    console.error('Error updating filter stats:', error);
-  }
-};
-
-// Obtener estadísticas de filtros (no respuestas del chat)
-const getFilterStats = () => {
-  try {
-    const stored = localStorage.getItem('beer-filter-stats');
-    return stored ? JSON.parse(stored) : {};
-  } catch {
-    return {};
-  }
+// Función para agregar nuevos filtros dinámicamente a las opciones disponibles
+const addDynamicFilter = (category: keyof typeof allAnswersPool, newFilter: string, emoji: string = '🌟') => {
+  // Crear una entrada temporal para el nuevo filtro
+  const newAnswer = `${emoji} ${newFilter}`;
+  
+  // Agregar a las estadísticas si no existe
+  updateFilterStats(newFilter);
+  
+  // Retornar la nueva opción para mostrarla inmediatamente
+  return newAnswer;
 };
 
 const sortAnswersByPopularity = (answers: string[], category: string): string[] => {
@@ -149,46 +139,111 @@ const allAnswersPool = {
   ]
 };
 
-// Obtener las top respuestas más usadas de cada categoría basándose en filtros reales
-const getTopAnswers = (category: keyof typeof allAnswersPool, limit: number = 6): string[] => {
+// Obtener respuestas dinámicas que incluyen todas las opciones disponibles
+const getDynamicAnswers = (category: keyof typeof allAnswersPool): string[] => {
   const allOptions = allAnswersPool[category];
-  const sorted = sortAnswersByPopularity(allOptions, category);
-  return sorted.slice(0, limit);
+  
+  // Para la categoría 'initial', solo mostrar las opciones predefinidas sin filtros específicos
+  if (category === 'initial') {
+    return allOptions;
+  }
+  
+  const filterStats = getFilterStats();
+  
+  // Crear opciones expandidas que incluyen filtros personalizados usados anteriormente
+  const expandedOptions = [...allOptions];
+  
+  // Agregar filtros personalizados que se hayan usado antes pero no estén en las opciones predefinidas
+  Object.keys(filterStats).forEach(filterValue => {
+    // Verificar si ya existe en las opciones predefinidas (comparando solo el texto, no el emoji)
+    const isInPredefined = allOptions.some(option => {
+      const optionText = option.split(' ').slice(1).join(' ');
+      return optionText.toLowerCase() === filterValue.toLowerCase();
+    });
+    
+    if (!isInPredefined && filterStats[filterValue] > 0) {
+      // Determinar emoji basado en la categoría y el valor específico
+      let emoji = '🌟';
+      
+      if (category === 'country') {
+        // Mapear países específicos a sus banderas
+        const countryFlags: { [key: string]: string } = {
+          'chile': '🇨🇱',
+          'méxico': '🇲🇽',
+          'estados unidos': '🇺🇸',
+          'república dominicana': '🇩🇴',
+          'alemania': '🇩🇪',
+          'bélgica': '🇧🇪',
+          'reino unido': '🇬🇧',
+          'españa': '🇪🇸',
+          'irlanda': '🇮🇪',
+          'república checa': '🇨🇿',
+          'japón': '🇯🇵',
+          'brasil': '🇧🇷',
+          'argentina': '🇦🇷'
+        };
+        emoji = countryFlags[filterValue.toLowerCase()] || '🌍';
+      } else if (category === 'style') {
+        emoji = '🍺';
+      } else if (category === 'flavor') {
+        emoji = '🍋';
+      } else if (category === 'intensity') {
+        emoji = '💪';
+      }
+      
+      expandedOptions.push(`${emoji} ${filterValue}`);
+    }
+  });
+  
+  const sorted = sortAnswersByPopularity(expandedOptions, category);
+  
+  // Para categorías con más de 6 opciones, mostrar las más populares + algunas aleatorias de las menos usadas
+  if (expandedOptions.length > 6) {
+    const popular = sorted.slice(0, 4); // Las 4 más populares siempre
+    const lessPopular = sorted.slice(4); // El resto
+    const randomLessPopular = lessPopular
+      .sort(() => Math.random() - 0.5) // Mezclar aleatoriamente
+      .slice(0, 2); // Tomar 2 aleatorias
+    return [...popular, ...randomLessPopular];
+  }
+  
+  // Para categorías con 6 o menos opciones, mostrar todas
+  return sorted;
 };
 
 const conversationSteps = {
   initial: {
     question: "¡Hola! ¿Con qué puedo ayudarte?",
     get answers() {
-      return getTopAnswers('initial', 5);
+      return getDynamicAnswers('initial');
     }
   },
   
   country: {
     question: "¡Perfecto! ¿De qué país te gustaría probar cervezas?",
     get answers() {
-      return getTopAnswers('country', 6);
+      return getDynamicAnswers('country');
     }
   },
 
   style: {
     question: "¡Excelente! ¿Qué estilo de cerveza prefieres?",
     get answers() {
-      return getTopAnswers('style', 6);
+      return getDynamicAnswers('style');
     }
   },
 
   flavor: {
     question: "¡Me encanta! ¿Qué sabor específico buscas?",
     get answers() {
-      return getTopAnswers('flavor', 6);
+      return getDynamicAnswers('flavor');
     }
   },
 
   intensity: {
     question: "¡Perfecto! ¿Qué intensidad prefieres?",
     get answers() {
-      return getTopAnswers('intensity', 3);
+      return getDynamicAnswers('intensity');
     }
   }
 };
@@ -216,14 +271,23 @@ export const AIChat = ({ isOpen, onClose, onSearch, onStartSearch }: AIChatProps
   const [isTyping, setIsTyping] = useState(false);
   const [showSearchLoader, setShowSearchLoader] = useState(false);
   const [lastActivityTime, setLastActivityTime] = useState<number>(Date.now());
+  const [refreshAnswers, setRefreshAnswers] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
   const navigate = useNavigate();
 
-  const scrollToBottom = () => {
-    // Solo hacer scroll si no hay respuestas visibles o si es la primera vez
-    if (!showAnswers || messages.length <= 2) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  const scrollToCenter = () => {
+    const chatContainer = document.querySelector('.chat-messages-container');
+    if (chatContainer) {
+      // Calcular la posición central del contenido
+      const containerHeight = chatContainer.clientHeight;
+      const scrollHeight = chatContainer.scrollHeight;
+      const centerPosition = (scrollHeight - containerHeight) / 2;
+      
+      chatContainer.scrollTo({
+        top: Math.max(0, centerPosition),
+        behavior: 'smooth'
+      });
     }
   };
 
@@ -247,6 +311,7 @@ export const AIChat = ({ isOpen, onClose, onSearch, onStartSearch }: AIChatProps
     });
     setShowAnswers(false);
     setAnswerKey(prev => prev + 1);
+    setRefreshAnswers(prev => prev + 1); // Forzar actualización de respuestas dinámicas
     setIsTyping(false);
     setLastActivityTime(Date.now());
   };
@@ -256,30 +321,35 @@ export const AIChat = ({ isOpen, onClose, onSearch, onStartSearch }: AIChatProps
   };
 
   useEffect(() => {
-    scrollToBottom();
+    if (messages.length > 1) {
+      setTimeout(() => {
+        scrollToCenter();
+      }, 300);
+    }
   }, [messages]);
 
   // Scroll cuando se muestran las respuestas
   useEffect(() => {
     if (showAnswers) {
       const timer = setTimeout(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-      }, 800); // Esperar a que termine la animación de cascada
+        scrollToCenter();
+      }, 400); // Esperar a que termine la animación de cascada
       return () => clearTimeout(timer);
     }
   }, [showAnswers]);
 
-  // Mostrar respuestas iniciales al abrir el chat
+  // Mostrar respuestas iniciales al abrir el chat y centrar contenido
   useEffect(() => {
     if (isOpen && currentStep === 'initial') {
       const timer = setTimeout(() => {
         setShowAnswers(true);
-      }, 600); // Reducido de 1000ms a 600ms
+        scrollToCenter(); // Centrar el contenido inicial
+      }, 600);
       return () => clearTimeout(timer);
     }
   }, [isOpen, currentStep]);
 
-  // Reiniciar chat después de 10 segundos de inactividad
+  // Reiniciar chat después de 15 segundos de inactividad
   useEffect(() => {
     if (!isOpen) return;
 
@@ -291,15 +361,15 @@ export const AIChat = ({ isOpen, onClose, onSearch, onStartSearch }: AIChatProps
     // Crear nuevo timer
     inactivityTimerRef.current = setTimeout(() => {
       const timeSinceLastActivity = Date.now() - lastActivityTime;
-      if (timeSinceLastActivity >= 10000) {
-        // 10 segundos de inactividad
+      if (timeSinceLastActivity >= 15000) {
+        // 15 segundos de inactividad
         resetChat();
         // Mostrar respuestas iniciales después del reset
         setTimeout(() => {
           setShowAnswers(true);
         }, 600);
       }
-    }, 10000);
+    }, 15000);
 
     // Cleanup al desmontar o cuando cambie la dependencia
     return () => {
@@ -309,6 +379,36 @@ export const AIChat = ({ isOpen, onClose, onSearch, onStartSearch }: AIChatProps
     };
   }, [isOpen, lastActivityTime]);
 
+
+  // Prevenir scroll del body cuando el chat está abierto
+  useEffect(() => {
+    if (isOpen) {
+      // Guardar la posición actual del scroll
+      const scrollY = window.scrollY;
+      // Prevenir scroll del body
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+    } else {
+      // Restaurar el scroll del body
+      const scrollY = document.body.style.top;
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY || '0') * -1);
+      }
+    }
+
+    // Cleanup
+    return () => {
+      if (isOpen) {
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+      }
+    };
+  }, [isOpen]);
 
   // Reiniciar conversación cuando se abre el chat (solo cuando cambia de cerrado a abierto)
   const prevIsOpenRef = useRef(isOpen);
@@ -463,6 +563,7 @@ export const AIChat = ({ isOpen, onClose, onSearch, onStartSearch }: AIChatProps
           addTypingMessage('¡Perfecto! Basándome en tus preferencias, voy a buscar las cervezas ideales para ti 🎯', () => {
             setTimeout(() => {
               console.log('🔍 Filtros desde chat:', updatedFilters); // Debug
+              setRefreshAnswers(prev => prev + 1); // Actualizar respuestas dinámicas
               onStartSearch?.(); // Iniciar búsqueda en el componente padre
               onSearch(updatedFilters); // Pasar los filtros
             }, 500);
@@ -481,6 +582,7 @@ export const AIChat = ({ isOpen, onClose, onSearch, onStartSearch }: AIChatProps
             // Mostrar nuevas respuestas después de que termine de escribir
             setShowAnswers(true);
             setAnswerKey(prev => prev + 1); // Forzar re-render para nueva animación
+            setRefreshAnswers(prev => prev + 1); // Actualizar respuestas dinámicas
           });
         }, 800); // Reducido de 1500ms a 800ms
     }, 500); // Reducido de 800ms a 500ms
@@ -499,16 +601,16 @@ export const AIChat = ({ isOpen, onClose, onSearch, onStartSearch }: AIChatProps
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-300">
-      <Card className="w-full max-w-md h-[calc(100vh-1rem)] sm:h-[90vh] md:h-[650px] max-h-[800px] flex flex-col bg-gradient-to-b from-card to-card/95 border-border shadow-2xl animate-in slide-in-from-bottom-4 duration-500">
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-start justify-center pt-4 sm:pt-8 md:items-center md:pt-0 p-2 sm:p-4 animate-in fade-in duration-300" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
+      <Card className="w-full max-w-md h-[75vh] sm:h-[85vh] md:h-[650px] max-h-[600px] sm:max-h-[700px] flex flex-col bg-gradient-to-b from-card to-card/95 border-border shadow-2xl animate-in slide-in-from-bottom-4 duration-500">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-border/50 bg-gradient-to-r from-primary/5 to-accent/5">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center shadow-lg animate-pulse">
-              <Bot className="text-white" size={20} />
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-border/50 bg-gradient-to-r from-primary/5 to-accent/5">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center shadow-lg animate-pulse">
+              <Bot className="text-white" size={16} />
             </div>
             <div>
-              <h3 className="font-bold text-lg bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              <h3 className="font-bold text-base sm:text-lg bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
                 Beer AI
               </h3>
               <p className="text-xs text-muted-foreground">Tu sommelier personal</p>
@@ -518,14 +620,14 @@ export const AIChat = ({ isOpen, onClose, onSearch, onStartSearch }: AIChatProps
             variant="ghost" 
             size="icon" 
             onClick={onClose}
-            className="hover:bg-destructive/10 hover:text-destructive transition-colors duration-200"
+            className="w-8 h-8 sm:w-10 sm:h-10 hover:bg-destructive/10 hover:text-destructive transition-colors duration-200"
           >
-            <X size={18} />
+            <X size={16} />
           </Button>
         </div>
 
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-gradient-to-b from-background/50 to-transparent">
+         {/* Messages */}
+         <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-6 bg-gradient-to-b from-background/50 to-transparent chat-messages-container">
           {messages.map((message, index) => (
             <div
               key={message.id}
@@ -533,24 +635,26 @@ export const AIChat = ({ isOpen, onClose, onSearch, onStartSearch }: AIChatProps
               style={{ animationDelay: `${index * 100}ms` }}
             >
               <div
-                className={`max-w-[85%] p-4 rounded-3xl shadow-lg ${
+                className={`max-w-[85%] p-3 sm:p-4 rounded-2xl sm:rounded-3xl shadow-lg ${
                   message.type === 'user'
-                    ? 'bg-gradient-to-r from-primary to-accent text-primary-foreground ml-4'
-                    : 'bg-gradient-to-r from-muted to-muted/80 text-foreground mr-4 border border-border/50'
+                    ? 'bg-gradient-to-r from-primary to-accent text-primary-foreground ml-2 sm:ml-4'
+                    : 'bg-gradient-to-r from-muted to-muted/80 text-foreground mr-2 sm:mr-4 border border-border/50'
                 }`}
               >
-                <div className="flex items-start gap-3">
+                <div className="flex items-start gap-2 sm:gap-3">
                   {message.type === 'ai' && (
-                    <div className="w-6 h-6 bg-gradient-to-br from-primary/20 to-accent/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <Bot size={12} className="text-primary" />
+                    <div className="w-5 h-5 sm:w-6 sm:h-6 bg-gradient-to-br from-primary/20 to-accent/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <Bot size={10} className="text-primary sm:hidden" />
+                      <Bot size={12} className="text-primary hidden sm:block" />
                     </div>
                   )}
                   {message.type === 'user' && (
-                    <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <User size={12} className="text-white" />
+                    <div className="w-5 h-5 sm:w-6 sm:h-6 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <User size={10} className="text-white sm:hidden" />
+                      <User size={12} className="text-white hidden sm:block" />
                     </div>
                   )}
-                  <p className="text-sm font-medium leading-relaxed">{message.content}</p>
+                  <p className="text-xs sm:text-sm font-medium leading-relaxed">{message.content}</p>
                 </div>
               </div>
             </div>
@@ -558,48 +662,37 @@ export const AIChat = ({ isOpen, onClose, onSearch, onStartSearch }: AIChatProps
 
           {/* Predefined Answers */}
           {conversationSteps[currentStep] && showAnswers && (
-            <div className="space-y-4" key={answerKey}>
+            <div className="space-y-3 sm:space-y-4" key={`${answerKey}-${refreshAnswers}`}>
               <div className="text-center animate-in fade-in duration-500">
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20">
+                <div className="inline-flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-2 rounded-full bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20">
                   <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
-                  <p className="text-sm font-medium text-primary">Selecciona una opción</p>
+                  <p className="text-xs sm:text-sm font-medium text-primary">Selecciona una opción</p>
                 </div>
               </div>
-              <div className="grid grid-cols-1 gap-3">
+              <div className="grid grid-cols-1 gap-2 sm:gap-3">
                 {conversationSteps[currentStep].answers.map((answer, index) => {
                   const filterStats = getFilterStats();
                   // Extraer el valor del filtro (texto después del emoji)
                   const filterValue = answer.split(' ').slice(1).join(' ');
                   const count = filterStats[filterValue] || 0;
-                  const isPopular = count > 0;
                   
                   return (
                     <Button
-                      key={`${answerKey}-${index}`}
+                      key={`${answerKey}-${refreshAnswers}-${index}`}
                       variant="outline"
                       size="lg"
                       onClick={() => handlePredefinedAnswer(answer)}
-                      className={`group justify-start text-left h-auto py-4 px-4 rounded-2xl border-2 ${
-                        isPopular && index === 0 
-                          ? 'border-primary/30 bg-gradient-to-r from-primary/10 to-accent/10' 
-                          : 'border-border/50'
-                      } hover:border-primary/50 hover:bg-gradient-to-r hover:from-primary/5 hover:to-accent/5 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg cascade-animation relative`}
+                      className="group justify-start text-left h-auto py-3 px-3 sm:py-4 sm:px-4 rounded-xl sm:rounded-2xl border-2 border-border/50 hover:border-primary/50 hover:bg-gradient-to-r hover:from-primary/5 hover:to-accent/5 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg cascade-animation"
                     >
-                      {isPopular && index === 0 && (
-                        <div className="absolute -top-2 -right-2 bg-gradient-to-r from-primary to-accent text-white text-[10px] px-2 py-1 rounded-full font-bold shadow-lg flex items-center gap-1">
-                          <TrendingUp size={10} />
-                          Popular
-                        </div>
-                      )}
-                      <div className="flex items-center gap-3 w-full">
-                        <div className="text-lg group-hover:scale-110 transition-transform duration-200">
+                      <div className="flex items-center gap-2 sm:gap-3 w-full">
+                        <div className="text-base sm:text-lg group-hover:scale-110 transition-transform duration-200">
                           {answer.split(' ')[0]}
                         </div>
-                        <span className="font-medium text-sm group-hover:text-primary transition-colors duration-200 flex-1">
+                        <span className="font-medium text-xs sm:text-sm group-hover:text-primary transition-colors duration-200 flex-1">
                           {filterValue}
                         </span>
                         {count > 0 && (
-                          <Badge variant="secondary" className="text-[10px] px-2 py-0.5 bg-muted">
+                          <Badge variant="secondary" className="text-[9px] sm:text-[10px] px-1.5 py-0.5 sm:px-2 bg-muted">
                             {count}x
                           </Badge>
                         )}
@@ -631,15 +724,14 @@ export const AIChat = ({ isOpen, onClose, onSearch, onStartSearch }: AIChatProps
             </div>
           )}
 
-          <div ref={messagesEndRef} />
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-border/50 bg-gradient-to-r from-muted/30 to-muted/10">
+        <div className="p-4 sm:p-6 border-t border-border/50 bg-gradient-to-r from-muted/30 to-muted/10">
           <div className="text-center">
             <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
               <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-              <span>IA activa - Selecciona una opción para continuar</span>
+              <span className="text-xs sm:text-xs">IA activa - Selecciona una opción para continuar</span>
             </div>
           </div>
         </div>

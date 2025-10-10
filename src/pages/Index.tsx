@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AIChat } from "@/components/AIChat";
 import { getFilters } from "@/lib/filterStorage";
+import { updateFilterStats } from "@/lib/filterStats";
 import { Beer as BeerIcon, Search, Sparkles, X, MessageCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import heroImage from "@/assets/hero-beer.jpg";
@@ -114,7 +115,7 @@ const Index = () => {
   }, [showContent, showAiMessage]);
 
   const triggerBubbleAnimation = () => {
-    if (!beerLogoRef.current) return;
+    if (!beerLogoRef.current || isChatOpen) return;
 
     setShowBubbleAnimation(true);
     const newBubbles = Array.from({ length: 15 }, (_, i) => i);
@@ -127,12 +128,25 @@ const Index = () => {
   };
 
   const handleFilterToggle = (category: keyof typeof selectedFilters, filterId: string) => {
+    const isAdding = !selectedFilters[category].includes(filterId);
+    
     setSelectedFilters((prev) => ({
       ...prev,
       [category]: prev[category].includes(filterId)
         ? prev[category].filter((id) => id !== filterId)
         : [...prev[category], filterId],
     }));
+
+    // Actualizar estadísticas solo cuando se agrega un filtro (no cuando se quita)
+    if (isAdding) {
+      // Obtener el label del filtro para las estadísticas
+      const categoryFilters = filters[category];
+      const filterOption = categoryFilters.options.find(opt => opt.id === filterId);
+      if (filterOption) {
+        updateFilterStats(filterOption.label);
+        console.log('📊 Estadísticas actualizadas para:', filterOption.label);
+      }
+    }
 
     const encouragingMessages = [
       "¡Excelente elección! Me gusta tu estilo 👌",
@@ -278,7 +292,7 @@ const Index = () => {
             onTouchEnd={(e) => e.stopPropagation()}
           >
             <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-transparent opacity-50 pointer-events-none"></div>
-            <MessageCircle className="animate-bounce flex-shrink-0 relative z-10 text-amber-900" size={20} />
+            <MessageCircle className={`flex-shrink-0 relative z-10 text-amber-900 ${!isChatOpen ? 'animate-bounce' : ''}`} size={20} />
             <p className="font-medium text-xs sm:text-sm md:text-base leading-relaxed text-left relative z-10 text-amber-900 line-clamp-2">{aiMessage}</p>
           </button>
         </div>
@@ -308,7 +322,7 @@ const Index = () => {
                 <BeerIcon className="text-primary-foreground group-hover:rotate-12 transition-transform duration-300" size={32} />
               </button>
 
-              {showBubbleAnimation && beerLogoRef.current && bubbles.map((bubble, index) => {
+              {showBubbleAnimation && !isChatOpen && beerLogoRef.current && bubbles.map((bubble, index) => {
                 const rect = beerLogoRef.current!.getBoundingClientRect();
                 const centerX = rect.left + rect.width / 2;
                 const centerY = rect.top + rect.height / 2;
