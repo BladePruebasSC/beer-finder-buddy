@@ -436,7 +436,16 @@ All colors MUST be HSL.
     .transition-opacity {
       -webkit-transform: translateZ(0);
       transform: translateZ(0);
-      will-change: transform, opacity;
+    }
+
+    /* Desactivar transiciones en imágenes durante scroll para prevenir parpadeo */
+    .beer-image {
+      transition: none !important;
+    }
+
+    /* Solo permitir transform en hover cuando no hay scroll */
+    .group:hover .beer-image {
+      transition: transform 0.3s ease-in-out;
     }
   }
 }

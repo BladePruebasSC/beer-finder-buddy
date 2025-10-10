@@ -37,7 +37,7 @@ export const BeerCard = ({ beer }: BeerCardProps) => {
           src={beer.image}
           alt={beer.name}
           containerClassName="beer-image-container h-48 sm:h-56 img-container-gradient"
-          className="beer-image beer-image-transition group-hover:scale-105"
+          className="beer-image group-hover:scale-105"
           loading="lazy"
           objectFit="contain"
         />
