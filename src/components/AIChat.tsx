@@ -52,61 +52,109 @@ interface AIChatProps {
   onStartSearch?: () => void;
 }
 
+// Definir TODAS las opciones posibles (más que las que se muestran)
+const allAnswersPool = {
+  initial: [
+    "🌍 Buscar por país de origen",
+    "🍺 Recomendarme por estilo",
+    "🍋 Buscar por sabor específico",
+    "💪 Encontrar por intensidad",
+    "🎯 Búsqueda completa personalizada"
+  ],
+  
+  country: [
+    "🇩🇴 República Dominicana",
+    "🇺🇸 Estados Unidos", 
+    "🇲🇽 México",
+    "🇩🇪 Alemania",
+    "🇧🇪 Bélgica",
+    "🇬🇧 Reino Unido",
+    "🇪🇸 España",
+    "🇮🇪 Irlanda",
+    "🇨🇿 República Checa",
+    "🇯🇵 Japón",
+    "🇧🇷 Brasil",
+    "🇦🇷 Argentina"
+  ],
+
+  style: [
+    "🍺 IPA",
+    "⚫ Stout",
+    "✨ Lager",
+    "🟠 Amber Ale",
+    "🌾 Wheat Beer",
+    "☁️ Hazy IPA",
+    "🍂 Porter",
+    "🔴 Red Ale",
+    "🌟 Pilsner",
+    "💛 Pale Ale",
+    "🎨 Sour Ale",
+    "🍯 Belgian Ale"
+  ],
+
+  flavor: [
+    "🍋 Cítrico",
+    "🥥 Tropical",
+    "🍫 Chocolate",
+    "☕ Café",
+    "🍯 Caramelo",
+    "🍓 Frutal",
+    "🌰 Nuez",
+    "🌿 Herbal",
+    "🍞 Pan tostado",
+    "🍑 Durazno",
+    "🫐 Frutos rojos",
+    "🍊 Naranja"
+  ],
+
+  intensity: [
+    "🪶 Ligera (< 5% ABV)",
+    "⚖️ Media (5-6.5% ABV)",
+    "💪 Fuerte (> 6.5% ABV)"
+  ]
+};
+
+// Obtener las top 6 respuestas más usadas de cada categoría
+const getTopAnswers = (category: keyof typeof allAnswersPool, limit: number = 6): string[] => {
+  const allOptions = allAnswersPool[category];
+  const sorted = sortAnswersByPopularity(allOptions);
+  return sorted.slice(0, limit);
+};
+
 const conversationSteps = {
   initial: {
     question: "¡Hola! ¿Con qué puedo ayudarte?",
-    answers: [
-      "🌍 Buscar por país de origen",
-      "🍺 Recomendarme por estilo",
-      "🍋 Buscar por sabor específico",
-      "💪 Encontrar por intensidad",
-      "🎯 Búsqueda completa personalizada"
-    ]
+    get answers() {
+      return getTopAnswers('initial', 5);
+    }
   },
   
   country: {
     question: "¡Perfecto! ¿De qué país te gustaría probar cervezas?",
-    answers: [
-      "🇩🇴 República Dominicana",
-      "🇺🇸 Estados Unidos", 
-      "🇲🇽 México",
-      "🇩🇪 Alemania",
-      "🇧🇪 Bélgica",
-      "🇬🇧 Reino Unido"
-    ]
+    get answers() {
+      return getTopAnswers('country', 6);
+    }
   },
 
   style: {
     question: "¡Excelente! ¿Qué estilo de cerveza prefieres?",
-    answers: [
-      "🍺 IPA",
-      "⚫ Stout",
-      "✨ Lager",
-      "🟠 Amber Ale",
-      "🌾 Wheat Beer",
-      "☁️ Hazy IPA"
-    ]
+    get answers() {
+      return getTopAnswers('style', 6);
+    }
   },
 
   flavor: {
     question: "¡Me encanta! ¿Qué sabor específico buscas?",
-    answers: [
-      "🍋 Cítrico",
-      "🥥 Tropical",
-      "🍫 Chocolate",
-      "☕ Café",
-      "🍯 Caramelo",
-      "🍓 Frutal"
-    ]
+    get answers() {
+      return getTopAnswers('flavor', 6);
+    }
   },
 
   intensity: {
     question: "¡Perfecto! ¿Qué intensidad prefieres?",
-    answers: [
-      "🪶 Ligera (< 5% ABV)",
-      "⚖️ Media (5-6.5% ABV)",
-      "💪 Fuerte (> 6.5% ABV)"
-    ]
+    get answers() {
+      return getTopAnswers('intensity', 3);
+    }
   }
 };
 
@@ -133,7 +181,6 @@ export const AIChat = ({ isOpen, onClose, onSearch, onStartSearch }: AIChatProps
   const [isTyping, setIsTyping] = useState(false);
   const [showSearchLoader, setShowSearchLoader] = useState(false);
   const [lastActivityTime, setLastActivityTime] = useState<number>(Date.now());
-  const [sortedAnswers, setSortedAnswers] = useState<string[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
   const navigate = useNavigate();
@@ -227,14 +274,6 @@ export const AIChat = ({ isOpen, onClose, onSearch, onStartSearch }: AIChatProps
     };
   }, [isOpen, lastActivityTime]);
 
-  // Ordenar respuestas por popularidad cuando cambia el paso
-  useEffect(() => {
-    if (conversationSteps[currentStep]) {
-      const answers = conversationSteps[currentStep].answers;
-      const sorted = sortAnswersByPopularity(answers);
-      setSortedAnswers(sorted);
-    }
-  }, [currentStep, answerKey]);
 
   // Reiniciar conversación cuando se abre el chat (solo cuando cambia de cerrado a abierto)
   const prevIsOpenRef = useRef(isOpen);
@@ -456,7 +495,7 @@ export const AIChat = ({ isOpen, onClose, onSearch, onStartSearch }: AIChatProps
           ))}
 
           {/* Predefined Answers */}
-          {conversationSteps[currentStep] && showAnswers && sortedAnswers.length > 0 && (
+          {conversationSteps[currentStep] && showAnswers && (
             <div className="space-y-4" key={answerKey}>
               <div className="text-center animate-in fade-in duration-500">
                 <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20">
@@ -465,7 +504,7 @@ export const AIChat = ({ isOpen, onClose, onSearch, onStartSearch }: AIChatProps
                 </div>
               </div>
               <div className="grid grid-cols-1 gap-3">
-                {sortedAnswers.map((answer, index) => {
+                {conversationSteps[currentStep].answers.map((answer, index) => {
                   const stats = getAnswerStats();
                   const count = stats[answer] || 0;
                   const isPopular = count > 0;

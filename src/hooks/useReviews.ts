@@ -140,6 +140,33 @@ export const usePendingReviews = () => {
   });
 };
 
+// Hook para obtener todas las reseñas aprobadas (para el dashboard)
+export const useApprovedReviews = () => {
+  return useQuery({
+    queryKey: ["approved-reviews"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("reviews")
+        .select(`
+          *,
+          beers:beer_id (
+            name,
+            image
+          )
+        `)
+        .eq("approved", true)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching approved reviews:", error);
+        throw error;
+      }
+
+      return data;
+    },
+  });
+};
+
 // Hook para aprobar una reseña
 export const useApproveReview = () => {
   const queryClient = useQueryClient();
@@ -192,6 +219,7 @@ export const useDeleteReview = () => {
     onSuccess: (data) => {
       // Invalidar queries relacionadas
       queryClient.invalidateQueries({ queryKey: ["pending-reviews"] });
+      queryClient.invalidateQueries({ queryKey: ["approved-reviews"] });
       queryClient.invalidateQueries({ queryKey: ["reviews", data.beerId] });
       queryClient.invalidateQueries({ queryKey: ["beer-rating", data.beerId] });
       queryClient.invalidateQueries({ queryKey: ["all-beer-ratings"] });
