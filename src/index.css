@@ -377,6 +377,14 @@ All colors MUST be HSL.
     content-visibility: auto;
   }
 
+  /* Prevenir parpadeo en scroll rápido en móviles */
+  img {
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+  }
+
   /* Efecto hover suave para imágenes */
   .img-hover-scale {
     @apply transition-transform duration-300 ease-in-out hover:scale-105;
@@ -414,5 +422,21 @@ All colors MUST be HSL.
   /* Smooth transitions para imágenes */
   .beer-image-transition {
     @apply transition-all duration-300 ease-in-out;
+  }
+
+  /* Optimización de scroll en móviles */
+  @media (max-width: 768px) {
+    * {
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Mejorar rendimiento de animaciones en móviles */
+    .transition-transform,
+    .transition-all,
+    .transition-opacity {
+      -webkit-transform: translateZ(0);
+      transform: translateZ(0);
+      will-change: transform, opacity;
+    }
   }
 }
