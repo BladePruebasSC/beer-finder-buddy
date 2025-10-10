@@ -1,8 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { Tables } from "@/integrations/supabase/types";
-
-export type Beer = Tables<"beers">;
-export type BeerInsert = Omit<Beer, 'id' | 'created_at' | 'updated_at'>;
+import type { Beer, BeerInsert } from "@/types/database";
 
 /**
  * @deprecated Use useBeers hook instead for better React integration

@@ -34,20 +34,24 @@
     transform: translate(-50%, -50%) scale(0);
     opacity: 0;
   }
-  5% {
-    transform: translate(-50%, -60%) scale(0.3);
+  10% {
+    transform: translate(-50%, -50%) scale(0.4);
     opacity: 1;
   }
-  15% {
-    transform: translate(calc(-50% + var(--drift-x, 0px)), -80px) scale(1);
+  20% {
+    transform: translate(calc(-50% + var(--drift-x, 0px)), -100px) scale(1);
     opacity: 1;
   }
-  85% {
-    transform: translate(calc(-50% + var(--drift-x, 0px)), calc(-100vh + 100px)) scale(0.9);
-    opacity: 0.9;
+  50% {
+    transform: translate(calc(-50% + var(--drift-x, 0px) * 1.5), -50vh) scale(0.8);
+    opacity: 0.8;
+  }
+  80% {
+    transform: translate(calc(-50% + var(--drift-x, 0px) * 2), calc(-100vh + 120px)) scale(0.6);
+    opacity: 0.4;
   }
   100% {
-    transform: translate(calc(-50% + var(--drift-x, 0px)), calc(-100vh + 80px)) scale(0);
+    transform: translate(calc(-50% + var(--drift-x, 0px) * 2), calc(-100vh + 60px)) scale(0);
     opacity: 0;
   }
 }
@@ -69,24 +73,28 @@
 
 @keyframes foam-to-notification {
   0% {
-    transform: translate(-50%, 0) scale(0.3);
+    transform: translate(-50%, calc(-100vh + 100px)) scale(0.2);
     opacity: 0;
-    border-radius: 75% 80% 70% 85% / 70% 75% 65% 80%;
+    border-radius: 50%;
+    filter: blur(8px);
   }
-  20% {
-    transform: translate(-50%, 0) scale(0.6);
-    opacity: 0.5;
-    border-radius: 70% 75% 65% 80% / 65% 70% 60% 75%;
+  30% {
+    transform: translate(-50%, -60vh) scale(0.5);
+    opacity: 0.6;
+    border-radius: 45% 55% 50% 60% / 55% 45% 60% 50%;
+    filter: blur(4px);
   }
-  50% {
-    transform: translate(-50%, 0) scale(0.9);
-    opacity: 0.8;
-    border-radius: 65% 70% 60% 75% / 60% 65% 55% 70%;
+  60% {
+    transform: translate(-50%, -20vh) scale(0.8);
+    opacity: 0.9;
+    border-radius: 40% 50% 45% 55% / 50% 40% 55% 45%;
+    filter: blur(2px);
   }
   100% {
     transform: translate(-50%, 0) scale(1);
     opacity: 1;
-    border-radius: 2rem;
+    border-radius: 1.5rem;
+    filter: blur(0px);
   }
 }
 
@@ -94,17 +102,32 @@
   0% {
     transform: translate(-50%, 0) scale(1);
     opacity: 1;
-    border-radius: 2rem;
+    border-radius: 1.5rem;
+    filter: blur(0px);
   }
-  30% {
-    transform: translate(-50%, -15px) scale(1.1);
-    opacity: 0.9;
-    border-radius: 2.5rem;
+  20% {
+    transform: translate(-50%, -20px) scale(1.15);
+    opacity: 0.95;
+    border-radius: 2rem;
+    filter: blur(1px);
+  }
+  50% {
+    transform: translate(-50%, -50px) scale(1.25);
+    opacity: 0.7;
+    border-radius: 50%;
+    filter: blur(3px);
+  }
+  80% {
+    transform: translate(-50%, -80px) scale(0.4);
+    opacity: 0.3;
+    border-radius: 50%;
+    filter: blur(6px);
   }
   100% {
-    transform: translate(-50%, -100px) scale(0);
+    transform: translate(-50%, -120px) scale(0);
     opacity: 0;
     border-radius: 50%;
+    filter: blur(10px);
   }
 }
 
@@ -139,43 +162,47 @@
   position: fixed;
   border-radius: 50%;
   background: radial-gradient(
-    circle at 30% 30%,
-    rgba(255, 255, 255, 0.95),
-    rgba(255, 255, 255, 0.8) 15%,
-    rgba(251, 191, 36, 0.7) 40%,
-    rgba(251, 191, 36, 0.5) 70%,
-    rgba(251, 146, 60, 0.3) 90%,
-    transparent
+    circle at 25% 25%,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(255, 255, 255, 0.9) 10%,
+    rgba(251, 191, 36, 0.8) 30%,
+    rgba(251, 191, 36, 0.6) 50%,
+    rgba(251, 146, 60, 0.4) 70%,
+    rgba(251, 146, 60, 0.2) 85%,
+    transparent 100%
   );
   box-shadow:
-    0 4px 15px rgba(251, 191, 36, 0.3),
-    inset -2px -2px 8px rgba(255, 255, 255, 0.5),
-    inset 1px 1px 6px rgba(251, 191, 36, 0.4);
+    0 0 20px rgba(251, 191, 36, 0.6),
+    0 4px 15px rgba(251, 191, 36, 0.4),
+    inset -3px -3px 10px rgba(255, 255, 255, 0.7),
+    inset 2px 2px 8px rgba(251, 191, 36, 0.5);
   pointer-events: none;
-  animation: beer-bubble-rise var(--duration, 3s) ease-out forwards;
+  animation: beer-bubble-rise var(--duration, 3s) cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
   z-index: 9999;
   will-change: transform, opacity;
+  filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.4));
 }
 
 .notification-from-foam {
-  animation: foam-to-notification 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation: foam-to-notification 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
   background: linear-gradient(135deg,
-    rgba(255, 255, 255, 0.95) 0%,
-    rgba(251, 191, 36, 0.9) 30%,
-    rgba(251, 146, 60, 0.9) 100%
+    rgba(255, 255, 255, 0.98) 0%,
+    rgba(251, 191, 36, 0.95) 40%,
+    rgba(251, 146, 60, 0.95) 100%
   );
   box-shadow:
-    0 20px 50px -10px rgba(251, 191, 36, 0.5),
-    0 0 40px rgba(251, 191, 36, 0.3),
-    inset 0 3px 15px rgba(255, 255, 255, 0.6),
-    inset 0 -3px 15px rgba(251, 146, 60, 0.3);
-  border: 2px solid rgba(255, 255, 255, 0.4);
-  backdrop-filter: blur(10px);
-  will-change: transform, opacity;
+    0 25px 60px -15px rgba(251, 191, 36, 0.6),
+    0 10px 30px rgba(251, 191, 36, 0.4),
+    0 0 50px rgba(251, 191, 36, 0.3),
+    inset 0 4px 20px rgba(255, 255, 255, 0.7),
+    inset 0 -4px 20px rgba(251, 146, 60, 0.4);
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(12px);
+  will-change: transform, opacity, filter;
 }
 
 .notification-exit {
-  animation: notification-exit 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+  animation: notification-exit 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
 }
 
 .foam-notification-content {

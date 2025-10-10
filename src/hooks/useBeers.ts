@@ -1,11 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Tables } from "@/integrations/supabase/types";
 import { toast } from "sonner";
+import type { Beer, BeerInsert, BeerUpdate } from "@/types/database";
 
-export type Beer = Tables<"beers">;
-export type BeerInsert = Omit<Beer, 'id' | 'created_at' | 'updated_at'>;
-export type BeerUpdate = Partial<BeerInsert>;
+export type { Beer, BeerInsert, BeerUpdate };
 
 const BEERS_QUERY_KEY = "beers";
 

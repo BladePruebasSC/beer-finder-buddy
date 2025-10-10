@@ -1,9 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { Tables, TablesInsert } from "@/integrations/supabase/types";
-
-type Review = Tables<"reviews">;
-type ReviewInsert = TablesInsert<"reviews">;
+import type { Review, ReviewInsert } from "@/types/database";
 
 export interface BeerRating {
   average_rating: number;
