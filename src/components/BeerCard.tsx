@@ -18,6 +18,7 @@ interface BeerCardProps {
     flavor: string[];
     description: string;
     image?: string | null;
+    status?: 'activo' | 'agotado';
   };
 }
 
@@ -31,14 +32,28 @@ export const BeerCard = ({ beer }: BeerCardProps) => {
       className="overflow-hidden bg-card border-border shadow-[var(--shadow-soft)] hover:shadow-[var(--shadow-beer)] transition-[var(--transition-smooth)] cursor-pointer group hover:-translate-y-1"
       onClick={() => navigate(`/beer/${beer.id}`)}
     >
-      <OptimizedImage
-        src={beer.image}
-        alt={beer.name}
-        containerClassName="beer-image-container h-48 sm:h-56 img-container-gradient"
-        className="beer-image beer-image-transition group-hover:scale-105"
-        loading="lazy"
-        objectFit="contain"
-      />
+      <div className="relative">
+        <OptimizedImage
+          src={beer.image}
+          alt={beer.name}
+          containerClassName="beer-image-container h-48 sm:h-56 img-container-gradient"
+          className="beer-image beer-image-transition group-hover:scale-105"
+          loading="lazy"
+          objectFit="contain"
+        />
+        {beer.status === 'agotado' && (
+          <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-[2px]">
+            <Badge variant="destructive" className="text-sm px-4 py-2 shadow-lg">
+              ❌ AGOTADO
+            </Badge>
+          </div>
+        )}
+        {beer.status === 'activo' && (
+          <Badge variant="default" className="absolute top-2 right-2 shadow-lg">
+            ✅ Activo
+          </Badge>
+        )}
+      </div>
       
       <div className="p-5">
         <div className="mb-3">

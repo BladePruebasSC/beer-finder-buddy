@@ -84,25 +84,30 @@ const Index = () => {
     let messageIndex = 0;
     const messageInterval = setInterval(() => {
       if (showContent && !showAiMessage) {
+        // Activar la animación de burbujas
         triggerBubbleAnimation();
+        // Mostrar el mensaje después de la animación de burbujas
         setTimeout(() => {
           setAiMessage(aiMessages[messageIndex]);
           setShowAiMessage(true);
+          // Ocultar la notificación después de mostrarla
+          setTimeout(() => hideNotification(), 6000);
         }, 800);
-        setTimeout(() => hideNotification(), 6000);
         messageIndex = (messageIndex + 1) % aiMessages.length;
       }
     }, 12000);
 
-    if (showContent) {
+    if (showContent && !showAiMessage) {
       setTimeout(() => {
+        // Activar la animación de burbujas solo si se va a mostrar mensaje
         triggerBubbleAnimation();
         setTimeout(() => {
           setAiMessage(aiMessages[0]);
           setShowAiMessage(true);
+          // Ocultar la notificación después de mostrarla
+          setTimeout(() => hideNotification(), 7000);
         }, 800);
       }, 500);
-      setTimeout(() => hideNotification(), 7000);
     }
 
     return () => clearInterval(messageInterval);

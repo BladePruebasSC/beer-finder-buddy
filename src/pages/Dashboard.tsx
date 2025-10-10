@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -51,6 +52,7 @@ const Dashboard = () => {
     description: "",
     image: "",
     origin: "",
+    status: "activo" as "activo" | "agotado",
   });
 
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -97,6 +99,7 @@ const Dashboard = () => {
       description: "",
       image: "",
       origin: "",
+      status: "activo",
     });
     setEditingBeer(null);
     setImageFile(null);
@@ -116,6 +119,7 @@ const Dashboard = () => {
       description: beer.description,
       image: beer.image || "",
       origin: beer.origin || "",
+      status: beer.status || "activo",
     });
     setImagePreview(beer.image || "");
     setImageFile(null);
@@ -147,6 +151,18 @@ const Dashboard = () => {
     if (window.confirm("¿Estás seguro de eliminar esta cerveza?")) {
       deleteBeerMutation.mutate(id);
     }
+  };
+
+  const handleToggleStatus = (beer: Beer) => {
+    const newStatus = beer.status === 'activo' ? 'agotado' : 'activo';
+    updateBeerMutation.mutate(
+      { id: beer.id, updates: { status: newStatus } },
+      {
+        onSuccess: () => {
+          toast.success(`Cerveza marcada como ${newStatus}`);
+        }
+      }
+    );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -184,6 +200,7 @@ const Dashboard = () => {
         description: formData.description,
         image: imageUrl,
         origin: formData.origin || null,
+        status: formData.status,
       };
 
       if (editingBeer) {
@@ -572,25 +589,44 @@ const Dashboard = () => {
                     )}
                   </div>
 
-                  <div>
-                    <Label htmlFor="origin">Origen</Label>
-                    <Select
-                      value={formData.origin}
-                      onValueChange={(value) => setFormData({...formData, origin: value})}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecciona el país de origen" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {filters.origin?.options?.map((option) => (
-                          <SelectItem key={option.id} value={option.id}>
-                            {option.icon} {option.label}
-                          </SelectItem>
-                        )) || (
-                          <SelectItem value="" disabled>No hay opciones disponibles</SelectItem>
-                        )}
-                      </SelectContent>
-                    </Select>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="origin">Origen</Label>
+                      <Select
+                        value={formData.origin}
+                        onValueChange={(value) => setFormData({...formData, origin: value})}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecciona el país de origen" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {filters.origin?.options?.map((option) => (
+                            <SelectItem key={option.id} value={option.id}>
+                              {option.icon} {option.label}
+                            </SelectItem>
+                          )) || (
+                            <SelectItem value="" disabled>No hay opciones disponibles</SelectItem>
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="status">Estado *</Label>
+                      <Select
+                        value={formData.status}
+                        onValueChange={(value) => setFormData({...formData, status: value as "activo" | "agotado"})}
+                        required
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="activo">✅ Activo</SelectItem>
+                          <SelectItem value="agotado">❌ Agotado</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
 
                   <div className="flex gap-2 pt-4">
@@ -645,7 +681,15 @@ const Dashboard = () => {
                       objectFit="contain"
                     />
                     <div className="p-4">
-                      <h3 className="font-bold text-lg mb-1 line-clamp-1">{beer.name}</h3>
+                      <div className="flex items-start justify-between gap-2 mb-1">
+                        <h3 className="font-bold text-lg line-clamp-1 flex-1">{beer.name}</h3>
+                        <Badge 
+                          variant={beer.status === 'activo' ? 'default' : 'destructive'}
+                          className="flex-shrink-0"
+                        >
+                          {beer.status === 'activo' ? '✅ Activo' : '❌ Agotado'}
+                        </Badge>
+                      </div>
                       <p className="text-sm text-muted-foreground mb-2 line-clamp-1">{beer.brewery}</p>
                       <div className="flex gap-2 text-xs text-muted-foreground mb-3">
                         <span>{beer.style}</span>
@@ -654,13 +698,24 @@ const Dashboard = () => {
                         <span>•</span>
                         <span>{beer.ibu} IBU</span>
                       </div>
+                      <div className="flex gap-2 mb-2">
+                        <Button 
+                          size="sm" 
+                          variant={beer.status === 'activo' ? 'outline' : 'default'}
+                          onClick={() => handleToggleStatus(beer)}
+                          className="flex-1"
+                          disabled={updateBeerMutation.isPending}
+                        >
+                          {beer.status === 'activo' ? '❌ Marcar Agotado' : '✅ Marcar Activo'}
+                        </Button>
+                      </div>
                       <div className="flex gap-2">
                         <Button 
                           size="sm" 
                           variant="outline" 
                           onClick={() => handleEdit(beer)}
                           className="flex-1"
-                          disabled={deleteBeerMutation.isPending}
+                          disabled={deleteBeerMutation.isPending || updateBeerMutation.isPending}
                         >
                           <Edit size={14} className="mr-1" />
                           Editar
@@ -670,7 +725,7 @@ const Dashboard = () => {
                           variant="destructive" 
                           onClick={() => handleDelete(beer.id)}
                           className="flex-1"
-                          disabled={deleteBeerMutation.isPending}
+                          disabled={deleteBeerMutation.isPending || updateBeerMutation.isPending}
                         >
                           {deleteBeerMutation.isPending ? (
                             <Loader2 size={14} className="mr-1 animate-spin" />
