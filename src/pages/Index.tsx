@@ -26,6 +26,7 @@ const Index = () => {
   const notificationRef = useRef<HTMLDivElement>(null);
   const [showBubbleAnimation, setShowBubbleAnimation] = useState(false);
   const [bubbles, setBubbles] = useState<number[]>([]);
+  const [isNotificationExiting, setIsNotificationExiting] = useState(false);
   const beerLogoRef = useRef<HTMLButtonElement>(null);
   const [selectedFilters, setSelectedFilters] = useState<{
     style: string[];
@@ -71,14 +72,24 @@ const Index = () => {
     "¡Tengo miles de cervezas en mi base de datos!",
   ];
 
+  const hideNotification = () => {
+    setIsNotificationExiting(true);
+    setTimeout(() => {
+      setShowAiMessage(false);
+      setIsNotificationExiting(false);
+    }, 600);
+  };
+
   useEffect(() => {
     let messageIndex = 0;
     const messageInterval = setInterval(() => {
-      if (showContent) {
+      if (showContent && !showAiMessage) {
         triggerBubbleAnimation();
-        setAiMessage(aiMessages[messageIndex]);
-        setShowAiMessage(true);
-        setTimeout(() => setShowAiMessage(false), 6000);
+        setTimeout(() => {
+          setAiMessage(aiMessages[messageIndex]);
+          setShowAiMessage(true);
+        }, 800);
+        setTimeout(() => hideNotification(), 6000);
         messageIndex = (messageIndex + 1) % aiMessages.length;
       }
     }, 12000);
@@ -86,24 +97,28 @@ const Index = () => {
     if (showContent) {
       setTimeout(() => {
         triggerBubbleAnimation();
-        setAiMessage(aiMessages[0]);
-        setShowAiMessage(true);
+        setTimeout(() => {
+          setAiMessage(aiMessages[0]);
+          setShowAiMessage(true);
+        }, 800);
       }, 500);
-      setTimeout(() => setShowAiMessage(false), 6500);
+      setTimeout(() => hideNotification(), 7000);
     }
 
     return () => clearInterval(messageInterval);
-  }, [showContent]);
+  }, [showContent, showAiMessage]);
 
   const triggerBubbleAnimation = () => {
+    if (!beerLogoRef.current) return;
+
     setShowBubbleAnimation(true);
-    const newBubbles = Array.from({ length: 12 }, (_, i) => i);
+    const newBubbles = Array.from({ length: 15 }, (_, i) => i);
     setBubbles(newBubbles);
 
     setTimeout(() => {
       setShowBubbleAnimation(false);
       setBubbles([]);
-    }, 2800);
+    }, 3500);
   };
 
   const handleFilterToggle = (category: keyof typeof selectedFilters, filterId: string) => {
@@ -124,9 +139,11 @@ const Index = () => {
 
     const randomMessage = encouragingMessages[Math.floor(Math.random() * encouragingMessages.length)];
     triggerBubbleAnimation();
-    setAiMessage(randomMessage);
-    setShowAiMessage(true);
-    setTimeout(() => setShowAiMessage(false), 2500);
+    setTimeout(() => {
+      setAiMessage(randomMessage);
+      setShowAiMessage(true);
+    }, 800);
+    setTimeout(() => hideNotification(), 3000);
   };
 
   const handleSearch = () => {
@@ -172,7 +189,7 @@ const Index = () => {
     
     // Si el swipe es suficiente hacia arriba, ocultar la notificación
     if (deltaY < -60) {
-      setShowAiMessage(false);
+      hideNotification();
     } else {
       // Resetear la posición con animación suave
       if (notification) {
@@ -239,8 +256,12 @@ const Index = () => {
     <div className={`min-h-screen bg-gradient-to-b from-background via-background to-muted transition-opacity duration-500 ${showContent ? 'opacity-100' : 'opacity-0'}`}>
       <div
         ref={notificationRef}
-        className={`fixed top-4 left-4 right-4 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 z-50 ${
-          showAiMessage ? "notification-from-foam" : "-translate-y-full opacity-0"
+        className={`fixed top-4 left-4 right-4 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 z-50 transition-all ${
+          showAiMessage && !isNotificationExiting
+            ? "notification-from-foam"
+            : isNotificationExiting
+            ? "notification-exit"
+            : "-translate-y-full opacity-0"
         }`}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
@@ -284,19 +305,27 @@ const Index = () => {
                 <BeerIcon className="text-primary-foreground group-hover:rotate-12 transition-transform duration-300" size={32} />
               </button>
 
-              {showBubbleAnimation && bubbles.map((bubble, index) => {
-                const drift = (Math.random() - 0.5) * 60;
-                const size = 12 + Math.random() * 18;
+              {showBubbleAnimation && beerLogoRef.current && bubbles.map((bubble, index) => {
+                const rect = beerLogoRef.current!.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                
+                const driftX = (Math.random() - 0.5) * 80;
+                const size = 8 + Math.random() * 16;
+                const duration = 2.5 + Math.random() * 1.5;
+                
                 return (
                   <div
                     key={bubble}
                     className="beer-bubble"
                     style={{
-                      left: '50%',
-                      animationDelay: `${index * 0.1}s`,
+                      left: `${centerX}px`,
+                      top: `${centerY}px`,
+                      animationDelay: `${index * 0.08}s`,
                       width: `${size}px`,
                       height: `${size}px`,
-                      '--drift': `${drift}px`,
+                      '--drift-x': `${driftX}px`,
+                      '--duration': `${duration}s`,
                     } as React.CSSProperties}
                   />
                 );
