@@ -15,8 +15,9 @@ import { useBeers, useCreateBeer, useUpdateBeer, useDeleteBeer, type Beer } from
 import { getFilters, addFilterOption, updateFilterOption, deleteFilterOption, type FilterOption } from "@/lib/filterStorage";
 import { uploadBeerImage, replaceBeerImage } from "@/lib/uploadImage";
 import { toast } from "sonner";
-import { Trash2, Edit, Plus, LogOut, Beer as BeerIcon, Filter, Loader2, Upload, X, MessageSquare } from "lucide-react";
+import { Trash2, Edit, Plus, LogOut, Beer as BeerIcon, Filter, Loader2, Upload, X, MessageSquare, TrendingUp } from "lucide-react";
 import { ReviewsManagement } from "@/components/ReviewsManagement";
+import { AIStatsChart } from "@/components/AIStatsChart";
 
 const DASHBOARD_PASSWORD = "CDERF";
 
@@ -336,7 +337,7 @@ const Dashboard = () => {
         </div>
 
         <Tabs defaultValue="beers" className="w-full">
-          <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-3 mb-8">
+          <TabsList className="grid w-full max-w-3xl mx-auto grid-cols-4 mb-8">
             <TabsTrigger value="beers">
               <BeerIcon className="mr-2 h-4 w-4" />
               Cervezas
@@ -348,6 +349,10 @@ const Dashboard = () => {
             <TabsTrigger value="filters">
               <Filter className="mr-2 h-4 w-4" />
               Filtros
+            </TabsTrigger>
+            <TabsTrigger value="stats">
+              <TrendingUp className="mr-2 h-4 w-4" />
+              Estadísticas
             </TabsTrigger>
           </TabsList>
 
@@ -886,6 +891,10 @@ const Dashboard = () => {
                 </Card>
               ))}
             </div>
+          </TabsContent>
+
+          <TabsContent value="stats">
+            <AIStatsChart />
           </TabsContent>
         </Tabs>
       </div>

@@ -29,11 +29,46 @@ const updateAnswerStats = (answer: string) => {
   localStorage.setItem(ANSWER_STATS_KEY, JSON.stringify(stats));
 };
 
-const sortAnswersByPopularity = (answers: string[]): string[] => {
-  const stats = getAnswerStats();
+// Sistema de tracking de FILTROS reales (no respuestas del chat)
+const updateFilterStats = (filterValue: string) => {
+  const FILTER_STATS_KEY = 'beer-filter-stats';
+  try {
+    const stored = localStorage.getItem(FILTER_STATS_KEY);
+    const stats = stored ? JSON.parse(stored) : {};
+    stats[filterValue] = (stats[filterValue] || 0) + 1;
+    localStorage.setItem(FILTER_STATS_KEY, JSON.stringify(stats));
+  } catch (error) {
+    console.error('Error updating filter stats:', error);
+  }
+};
+
+// Obtener estadísticas de filtros (no respuestas del chat)
+const getFilterStats = () => {
+  try {
+    const stored = localStorage.getItem('beer-filter-stats');
+    return stored ? JSON.parse(stored) : {};
+  } catch {
+    return {};
+  }
+};
+
+const sortAnswersByPopularity = (answers: string[], category: string): string[] => {
+  const filterStats = getFilterStats();
+  
   return [...answers].sort((a, b) => {
-    const countA = stats[a] || 0;
-    const countB = stats[b] || 0;
+    // Extraer el valor del filtro de la respuesta (después del emoji)
+    const extractFilter = (answer: string) => {
+      // Para países, estilos, sabores e intensidad, extraer el texto después del emoji
+      const parts = answer.split(' ').slice(1).join(' ');
+      return parts;
+    };
+    
+    const filterA = extractFilter(a);
+    const filterB = extractFilter(b);
+    
+    const countA = filterStats[filterA] || 0;
+    const countB = filterStats[filterB] || 0;
+    
     return countB - countA; // Orden descendente (más usadas primero)
   });
 };
@@ -114,10 +149,10 @@ const allAnswersPool = {
   ]
 };
 
-// Obtener las top 6 respuestas más usadas de cada categoría
+// Obtener las top respuestas más usadas de cada categoría basándose en filtros reales
 const getTopAnswers = (category: keyof typeof allAnswersPool, limit: number = 6): string[] => {
   const allOptions = allAnswersPool[category];
-  const sorted = sortAnswersByPopularity(allOptions);
+  const sorted = sortAnswersByPopularity(allOptions, category);
   return sorted.slice(0, limit);
 };
 
@@ -327,9 +362,6 @@ export const AIChat = ({ isOpen, onClose, onSearch, onStartSearch }: AIChatProps
     // Actualizar actividad
     updateActivity();
     
-    // Registrar la respuesta en las estadísticas
-    updateAnswerStats(answer);
-    
     // Ocultar respuestas inmediatamente
     setShowAnswers(false);
     
@@ -365,35 +397,65 @@ export const AIChat = ({ isOpen, onClose, onSearch, onStartSearch }: AIChatProps
           return;
         }
       } else {
-        // Procesar la selección específica
+        // Procesar la selección específica y registrar el filtro usado
         if (currentStep === 'country') {
           // Extraer el país correctamente del emoji + texto
-          if (answer.includes("República Dominicana")) updatedFilters.origin = ["República Dominicana"];
-          else if (answer.includes("Estados Unidos")) updatedFilters.origin = ["Estados Unidos"];
-          else if (answer.includes("México")) updatedFilters.origin = ["México"];
-          else if (answer.includes("Alemania")) updatedFilters.origin = ["Alemania"];
-          else if (answer.includes("Bélgica")) updatedFilters.origin = ["Bélgica"];
-          else if (answer.includes("Reino Unido")) updatedFilters.origin = ["Reino Unido"];
+          let selectedCountry = "";
+          if (answer.includes("República Dominicana")) { selectedCountry = "República Dominicana"; updatedFilters.origin = [selectedCountry]; }
+          else if (answer.includes("Estados Unidos")) { selectedCountry = "Estados Unidos"; updatedFilters.origin = [selectedCountry]; }
+          else if (answer.includes("México")) { selectedCountry = "México"; updatedFilters.origin = [selectedCountry]; }
+          else if (answer.includes("Alemania")) { selectedCountry = "Alemania"; updatedFilters.origin = [selectedCountry]; }
+          else if (answer.includes("Bélgica")) { selectedCountry = "Bélgica"; updatedFilters.origin = [selectedCountry]; }
+          else if (answer.includes("Reino Unido")) { selectedCountry = "Reino Unido"; updatedFilters.origin = [selectedCountry]; }
+          else if (answer.includes("España")) { selectedCountry = "España"; updatedFilters.origin = [selectedCountry]; }
+          else if (answer.includes("Irlanda")) { selectedCountry = "Irlanda"; updatedFilters.origin = [selectedCountry]; }
+          else if (answer.includes("República Checa")) { selectedCountry = "República Checa"; updatedFilters.origin = [selectedCountry]; }
+          else if (answer.includes("Japón")) { selectedCountry = "Japón"; updatedFilters.origin = [selectedCountry]; }
+          else if (answer.includes("Brasil")) { selectedCountry = "Brasil"; updatedFilters.origin = [selectedCountry]; }
+          else if (answer.includes("Argentina")) { selectedCountry = "Argentina"; updatedFilters.origin = [selectedCountry]; }
+          
+          if (selectedCountry) updateFilterStats(selectedCountry);
         } else if (currentStep === 'style') {
           // Extraer el estilo correctamente
-          if (answer.includes("IPA")) updatedFilters.style = ["IPA"];
-          else if (answer.includes("Stout")) updatedFilters.style = ["Stout"];
-          else if (answer.includes("Lager")) updatedFilters.style = ["Lager"];
-          else if (answer.includes("Amber")) updatedFilters.style = ["Amber Ale"];
-          else if (answer.includes("Wheat")) updatedFilters.style = ["Wheat Beer"];
-          else if (answer.includes("Hazy")) updatedFilters.style = ["Hazy IPA"];
+          let selectedStyle = "";
+          if (answer.includes("IPA") && !answer.includes("Hazy")) { selectedStyle = "IPA"; updatedFilters.style = [selectedStyle]; }
+          else if (answer.includes("Stout")) { selectedStyle = "Stout"; updatedFilters.style = [selectedStyle]; }
+          else if (answer.includes("Lager")) { selectedStyle = "Lager"; updatedFilters.style = [selectedStyle]; }
+          else if (answer.includes("Amber")) { selectedStyle = "Amber Ale"; updatedFilters.style = [selectedStyle]; }
+          else if (answer.includes("Wheat")) { selectedStyle = "Wheat Beer"; updatedFilters.style = [selectedStyle]; }
+          else if (answer.includes("Hazy")) { selectedStyle = "Hazy IPA"; updatedFilters.style = [selectedStyle]; }
+          else if (answer.includes("Porter")) { selectedStyle = "Porter"; updatedFilters.style = [selectedStyle]; }
+          else if (answer.includes("Red Ale")) { selectedStyle = "Red Ale"; updatedFilters.style = [selectedStyle]; }
+          else if (answer.includes("Pilsner")) { selectedStyle = "Pilsner"; updatedFilters.style = [selectedStyle]; }
+          else if (answer.includes("Pale Ale")) { selectedStyle = "Pale Ale"; updatedFilters.style = [selectedStyle]; }
+          else if (answer.includes("Sour")) { selectedStyle = "Sour Ale"; updatedFilters.style = [selectedStyle]; }
+          else if (answer.includes("Belgian")) { selectedStyle = "Belgian Ale"; updatedFilters.style = [selectedStyle]; }
+          
+          if (selectedStyle) updateFilterStats(selectedStyle);
         } else if (currentStep === 'flavor') {
           // Extraer el sabor correctamente
-          if (answer.includes("Cítrico")) updatedFilters.flavor = ["Cítrico"];
-          else if (answer.includes("Tropical")) updatedFilters.flavor = ["Tropical"];
-          else if (answer.includes("Chocolate")) updatedFilters.flavor = ["Chocolate"];
-          else if (answer.includes("Café")) updatedFilters.flavor = ["Café"];
-          else if (answer.includes("Caramelo")) updatedFilters.flavor = ["Caramelo"];
-          else if (answer.includes("Frutal")) updatedFilters.flavor = ["Frutal"];
+          let selectedFlavor = "";
+          if (answer.includes("Cítrico")) { selectedFlavor = "Cítrico"; updatedFilters.flavor = [selectedFlavor]; }
+          else if (answer.includes("Tropical")) { selectedFlavor = "Tropical"; updatedFilters.flavor = [selectedFlavor]; }
+          else if (answer.includes("Chocolate")) { selectedFlavor = "Chocolate"; updatedFilters.flavor = [selectedFlavor]; }
+          else if (answer.includes("Café")) { selectedFlavor = "Café"; updatedFilters.flavor = [selectedFlavor]; }
+          else if (answer.includes("Caramelo")) { selectedFlavor = "Caramelo"; updatedFilters.flavor = [selectedFlavor]; }
+          else if (answer.includes("Frutal")) { selectedFlavor = "Frutal"; updatedFilters.flavor = [selectedFlavor]; }
+          else if (answer.includes("Nuez")) { selectedFlavor = "Nuez"; updatedFilters.flavor = [selectedFlavor]; }
+          else if (answer.includes("Herbal")) { selectedFlavor = "Herbal"; updatedFilters.flavor = [selectedFlavor]; }
+          else if (answer.includes("Pan tostado")) { selectedFlavor = "Pan tostado"; updatedFilters.flavor = [selectedFlavor]; }
+          else if (answer.includes("Durazno")) { selectedFlavor = "Durazno"; updatedFilters.flavor = [selectedFlavor]; }
+          else if (answer.includes("Frutos rojos")) { selectedFlavor = "Frutos rojos"; updatedFilters.flavor = [selectedFlavor]; }
+          else if (answer.includes("Naranja")) { selectedFlavor = "Naranja"; updatedFilters.flavor = [selectedFlavor]; }
+          
+          if (selectedFlavor) updateFilterStats(selectedFlavor);
         } else if (currentStep === 'intensity') {
-          if (answer.includes("Ligera")) updatedFilters.strength = ["light"];
-          else if (answer.includes("Media")) updatedFilters.strength = ["medium"];
-          else if (answer.includes("Fuerte")) updatedFilters.strength = ["strong"];
+          let selectedIntensity = "";
+          if (answer.includes("Ligera")) { selectedIntensity = "Ligera"; updatedFilters.strength = ["light"]; }
+          else if (answer.includes("Media")) { selectedIntensity = "Media"; updatedFilters.strength = ["medium"]; }
+          else if (answer.includes("Fuerte")) { selectedIntensity = "Fuerte"; updatedFilters.strength = ["strong"]; }
+          
+          if (selectedIntensity) updateFilterStats(selectedIntensity);
         }
 
         // Finalizar después de cualquier selección específica
@@ -437,8 +499,8 @@ export const AIChat = ({ isOpen, onClose, onSearch, onStartSearch }: AIChatProps
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-300">
-      <Card className="w-full max-w-md h-[650px] flex flex-col bg-gradient-to-b from-card to-card/95 border-border shadow-2xl animate-in slide-in-from-bottom-4 duration-500">
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-300">
+      <Card className="w-full max-w-md h-[calc(100vh-1rem)] sm:h-[90vh] md:h-[650px] max-h-[800px] flex flex-col bg-gradient-to-b from-card to-card/95 border-border shadow-2xl animate-in slide-in-from-bottom-4 duration-500">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-border/50 bg-gradient-to-r from-primary/5 to-accent/5">
           <div className="flex items-center gap-3">
@@ -505,8 +567,10 @@ export const AIChat = ({ isOpen, onClose, onSearch, onStartSearch }: AIChatProps
               </div>
               <div className="grid grid-cols-1 gap-3">
                 {conversationSteps[currentStep].answers.map((answer, index) => {
-                  const stats = getAnswerStats();
-                  const count = stats[answer] || 0;
+                  const filterStats = getFilterStats();
+                  // Extraer el valor del filtro (texto después del emoji)
+                  const filterValue = answer.split(' ').slice(1).join(' ');
+                  const count = filterStats[filterValue] || 0;
                   const isPopular = count > 0;
                   
                   return (
@@ -532,7 +596,7 @@ export const AIChat = ({ isOpen, onClose, onSearch, onStartSearch }: AIChatProps
                           {answer.split(' ')[0]}
                         </div>
                         <span className="font-medium text-sm group-hover:text-primary transition-colors duration-200 flex-1">
-                          {answer.split(' ').slice(1).join(' ')}
+                          {filterValue}
                         </span>
                         {count > 0 && (
                           <Badge variant="secondary" className="text-[10px] px-2 py-0.5 bg-muted">
