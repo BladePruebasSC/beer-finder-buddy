@@ -236,12 +236,18 @@ export const AIChat = ({ isOpen, onClose, onSearch, onStartSearch }: AIChatProps
     }
   }, [currentStep, answerKey]);
 
-  // Reiniciar conversación cuando se abre el chat
+  // Reiniciar conversación cuando se abre el chat (solo cuando cambia de cerrado a abierto)
+  const prevIsOpenRef = useRef(isOpen);
+  
   useEffect(() => {
-    if (isOpen) {
-      // Resetear el chat a su estado inicial
-      resetChat();
+    // Solo resetear cuando el chat se acaba de abrir (transición de false a true)
+    if (isOpen && !prevIsOpenRef.current) {
+      // Usar setTimeout para evitar actualización durante render
+      setTimeout(() => {
+        resetChat();
+      }, 0);
     }
+    prevIsOpenRef.current = isOpen;
   }, [isOpen]);
 
   const addMessage = (type: 'ai' | 'user', content: string) => {
