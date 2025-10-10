@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useBeer } from "@/hooks/useBeers";
 import { useBeerRating } from "@/hooks/useReviews";
@@ -14,10 +14,14 @@ import { ArrowLeft, Flame, Droplet, MapPin, Building2, Loader2, Bot, MessageCirc
 const BeerDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { data: beer, isLoading } = useBeer(id);
   const { data: beerRating } = useBeerRating(id);
   const [showAiMessage, setShowAiMessage] = useState(false);
   const [showReviewForm, setShowReviewForm] = useState(false);
+
+  // Debug: verificar el estado de navegación
+  console.log('🔍 BeerDetail - location.state:', location.state);
 
   // Mostrar mensaje de IA después de cargar
   useEffect(() => {
@@ -45,7 +49,9 @@ const BeerDetail = () => {
       <div className="min-h-screen bg-gradient-to-b from-background to-muted flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold mb-4">Cerveza no encontrada</h2>
-          <Button onClick={() => navigate("/")}>Volver al inicio</Button>
+          <Button onClick={() => navigate("/catalog", { state: { filters: {} } })}>
+            Volver al catálogo
+          </Button>
         </div>
       </div>
     );
@@ -93,11 +99,18 @@ const BeerDetail = () => {
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <Button
           variant="outline"
-          onClick={() => navigate("/")}
+          onClick={() => {
+            // Siempre volver al catálogo con los filtros preservados
+            navigate("/catalog", { 
+              state: { 
+                filters: location.state?.filters || {}
+              }
+            });
+          }}
           className="mb-6"
         >
           <ArrowLeft className="mr-2" size={16} />
-          Volver al inicio
+          Volver al catálogo
         </Button>
 
         <Card className="overflow-hidden">

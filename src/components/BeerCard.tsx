@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Droplet, Flame } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { OptimizedImage } from "./OptimizedImage";
 import { Rating } from "./Rating";
 import { useAllBeerRatings } from "@/hooks/useReviews";
@@ -24,13 +24,35 @@ interface BeerCardProps {
 
 export const BeerCard = ({ beer }: BeerCardProps) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { data: allRatings } = useAllBeerRatings();
   const beerRating = allRatings?.[beer.id];
+
+  // Detectar si estamos en el catálogo
+  const isInCatalog = location.pathname === '/catalog';
+  
+  // Debug: verificar el pathname y estado
+  console.log('🔍 BeerCard - pathname:', location.pathname);
+  console.log('🔍 BeerCard - isInCatalog:', isInCatalog);
+  console.log('🔍 BeerCard - location.state:', location.state);
   
   return (
     <Card 
       className="overflow-hidden bg-card border-border shadow-[var(--shadow-soft)] hover:shadow-[var(--shadow-beer)] transition-[var(--transition-smooth)] cursor-pointer group hover:-translate-y-1"
-      onClick={() => navigate(`/beer/${beer.id}`)}
+      onClick={() => {
+        if (isInCatalog) {
+          // Si estamos en el catálogo, pasar los filtros
+          const navigationState = {
+            filters: location.state?.filters || {}
+          };
+          console.log('🔍 BeerCard - Navegando desde catálogo con estado:', navigationState);
+          navigate(`/beer/${beer.id}`, { state: navigationState });
+        } else {
+          // Si no estamos en el catálogo, navegar sin estado
+          console.log('🔍 BeerCard - Navegando normalmente (no desde catálogo)');
+          navigate(`/beer/${beer.id}`);
+        }
+      }}
     >
       <div className="relative">
         <OptimizedImage
