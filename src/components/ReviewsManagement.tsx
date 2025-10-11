@@ -1,31 +1,17 @@
-import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Rating } from "@/components/Rating";
 import { OptimizedImage } from "@/components/OptimizedImage";
-import { usePendingReviews, useApprovedReviews, useApproveReview, useDeleteReview } from "@/hooks/useReviews";
-import { Loader2, Check, MessageSquare, Clock, CheckCircle, Trash2 } from "lucide-react";
+import { useAllReviews, useDeleteReview } from "@/hooks/useReviews";
+import { Loader2, MessageSquare, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { toast } from "sonner";
 
 export const ReviewsManagement = () => {
-  const { data: pendingReviews = [], isLoading: pendingLoading } = usePendingReviews();
-  const { data: approvedReviews = [], isLoading: approvedLoading } = useApprovedReviews();
-  const approveReview = useApproveReview();
+  const { data: allReviews = [], isLoading: reviewsLoading } = useAllReviews();
   const deleteReview = useDeleteReview();
-  const [activeTab, setActiveTab] = useState("pending");
-
-  const handleApprove = async (reviewId: string) => {
-    try {
-      await approveReview.mutateAsync(reviewId);
-      toast.success("Reseña aprobada exitosamente");
-    } catch (error) {
-      toast.error("Error al aprobar la reseña");
-    }
-  };
 
   const handleDelete = async (reviewId: string, beerId: string) => {
     if (!window.confirm("¿Estás seguro de que quieres eliminar esta reseña?")) {
@@ -41,114 +27,61 @@ export const ReviewsManagement = () => {
   };
 
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+    <div className="space-y-6">
       <div className="flex items-center justify-between mb-4 flex-wrap gap-4">
         <div>
           <h3 className="text-2xl font-bold">Gestión de Reseñas</h3>
           <p className="text-sm text-muted-foreground">
-            Administra las reseñas pendientes y aprobadas
+            Todas las reseñas se publican automáticamente
           </p>
         </div>
         <div className="flex gap-2">
-          <Badge variant="secondary" className="flex items-center gap-2">
-            <Clock size={14} />
-            Pendientes: {pendingReviews.length}
-          </Badge>
-          <Badge variant="default" className="flex items-center gap-2">
-            <CheckCircle size={14} />
-            Aprobadas: {approvedReviews.length}
+          <Badge variant="outline" className="flex items-center gap-1">
+            <MessageSquare className="h-3 w-3" />
+            {allReviews.length} Reseñas
           </Badge>
         </div>
       </div>
 
-      <TabsList className="grid w-full max-w-md grid-cols-2">
-        <TabsTrigger value="pending" className="flex items-center gap-2">
-          <Clock size={16} />
-          Pendientes {pendingReviews.length > 0 && `(${pendingReviews.length})`}
-        </TabsTrigger>
-        <TabsTrigger value="approved" className="flex items-center gap-2">
-          <CheckCircle size={16} />
-          Aprobadas {approvedReviews.length > 0 && `(${approvedReviews.length})`}
-        </TabsTrigger>
-      </TabsList>
-
-      <TabsContent value="pending" className="space-y-4">
-        {pendingLoading ? (
-          <div className="text-center py-8">
-            <Loader2 className="animate-spin mx-auto text-primary mb-2" size={32} />
-            <p className="text-muted-foreground">Cargando reseñas pendientes...</p>
+      {reviewsLoading ? (
+        <div className="text-center py-8">
+          <Loader2 className="animate-spin mx-auto text-primary mb-2" size={32} />
+          <p className="text-muted-foreground">Cargando reseñas...</p>
+        </div>
+      ) : allReviews.length === 0 ? (
+        <Card className="p-8 text-center bg-gradient-to-br from-muted/30 to-muted/10">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-muted rounded-full mb-4">
+            <MessageSquare className="text-muted-foreground" size={28} />
           </div>
-        ) : pendingReviews.length === 0 ? (
-          <Card className="p-8 text-center bg-gradient-to-br from-muted/30 to-muted/10">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-muted rounded-full mb-4">
-              <MessageSquare className="text-muted-foreground" size={28} />
-            </div>
-            <h3 className="text-lg font-semibold mb-2">No hay reseñas pendientes</h3>
-            <p className="text-muted-foreground text-sm">
-              ¡Todas las reseñas han sido procesadas!
-            </p>
-          </Card>
-        ) : (
-          <div className="grid gap-4">
-            {pendingReviews.map((review: any) => (
-              <ReviewCard
-                key={review.id}
-                review={review}
-                onApprove={handleApprove}
-                onDelete={handleDelete}
-                showApprove={true}
-                isPending={approveReview.isPending || deleteReview.isPending}
-              />
-            ))}
-          </div>
-        )}
-      </TabsContent>
-
-      <TabsContent value="approved" className="space-y-4">
-        {approvedLoading ? (
-          <div className="text-center py-8">
-            <Loader2 className="animate-spin mx-auto text-primary mb-2" size={32} />
-            <p className="text-muted-foreground">Cargando reseñas aprobadas...</p>
-          </div>
-        ) : approvedReviews.length === 0 ? (
-          <Card className="p-8 text-center bg-gradient-to-br from-muted/30 to-muted/10">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-muted rounded-full mb-4">
-              <CheckCircle className="text-muted-foreground" size={28} />
-            </div>
-            <h3 className="text-lg font-semibold mb-2">No hay reseñas aprobadas</h3>
-            <p className="text-muted-foreground text-sm">
-              Las reseñas aprobadas aparecerán aquí
-            </p>
-          </Card>
-        ) : (
-          <div className="grid gap-4">
-            {approvedReviews.map((review: any) => (
-              <ReviewCard
-                key={review.id}
-                review={review}
-                onApprove={handleApprove}
-                onDelete={handleDelete}
-                showApprove={false}
-                isPending={deleteReview.isPending}
-              />
-            ))}
-          </div>
-        )}
-      </TabsContent>
-    </Tabs>
+          <h3 className="text-lg font-semibold mb-2">No hay reseñas</h3>
+          <p className="text-muted-foreground text-sm">
+            Las reseñas aparecerán aquí cuando los usuarios las escriban
+          </p>
+        </Card>
+      ) : (
+        <div className="grid gap-4">
+          {allReviews.map((review: any) => (
+            <ReviewCard
+              key={review.id}
+              review={review}
+              onDelete={handleDelete}
+              isPending={deleteReview.isPending}
+            />
+          ))}
+        </div>
+      )}
+    </div>
   );
 };
 
 // Componente para renderizar cada tarjeta de reseña
 interface ReviewCardProps {
   review: any;
-  onApprove: (id: string) => void;
   onDelete: (id: string, beerId: string) => void;
-  showApprove: boolean;
   isPending: boolean;
 }
 
-const ReviewCard = ({ review, onApprove, onDelete, showApprove, isPending }: ReviewCardProps) => {
+const ReviewCard = ({ review, onDelete, isPending }: ReviewCardProps) => {
   return (
     <Card className="p-5 bg-gradient-to-br from-card to-card/95 hover:shadow-lg transition-all duration-200">
       <div className="flex gap-4">
@@ -192,19 +125,8 @@ const ReviewCard = ({ review, onApprove, onDelete, showApprove, isPending }: Rev
             {review.comment}
           </p>
 
-          {/* Botones de acción */}
+          {/* Botón de eliminar */}
           <div className="flex items-center gap-2 pt-2">
-            {showApprove && (
-              <Button
-                size="sm"
-                onClick={() => onApprove(review.id)}
-                disabled={isPending}
-                className="bg-green-600 hover:bg-green-700 text-white"
-              >
-                <Check className="mr-2" size={14} />
-                Aprobar
-              </Button>
-            )}
             <Button
               size="sm"
               variant="destructive"

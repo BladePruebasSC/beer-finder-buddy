@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS public.reviews (
   user_name TEXT NOT NULL,
   rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
   comment TEXT NOT NULL,
-  approved BOOLEAN DEFAULT false NOT NULL,
+  approved BOOLEAN DEFAULT true NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
@@ -19,11 +19,11 @@ CREATE INDEX IF NOT EXISTS reviews_created_at_idx ON public.reviews(created_at D
 -- Habilitar RLS (Row Level Security)
 ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
 
--- Política para permitir a todos leer solo las reseñas aprobadas
-CREATE POLICY "Las reseñas aprobadas son públicas para lectura"
+-- Política para permitir a todos leer todas las reseñas
+CREATE POLICY "Todas las reseñas son públicas para lectura"
   ON public.reviews
   FOR SELECT
-  USING (approved = true);
+  USING (true);
 
 -- Política para permitir a cualquiera insertar reseñas
 CREATE POLICY "Cualquiera puede crear reseñas"
@@ -46,7 +46,7 @@ CREATE TRIGGER update_reviews_updated_at_trigger
   FOR EACH ROW
   EXECUTE FUNCTION update_reviews_updated_at();
 
--- Vista materializada para calcular estadísticas de calificaciones por cerveza (solo aprobadas)
+-- Vista materializada para calcular estadísticas de calificaciones por cerveza
 CREATE MATERIALIZED VIEW IF NOT EXISTS beer_ratings_stats AS
 SELECT 
   beer_id,
@@ -54,7 +54,6 @@ SELECT
   AVG(rating)::numeric(3,2) as average_rating,
   MAX(created_at) as last_review_date
 FROM public.reviews
-WHERE approved = true
 GROUP BY beer_id;
 
 -- Crear índice único en la vista materializada

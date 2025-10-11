@@ -7,7 +7,7 @@ export interface BeerRating {
   total_reviews: number;
 }
 
-// Hook para obtener reseñas de una cerveza específica (solo aprobadas)
+// Hook para obtener reseñas de una cerveza específica (todas las reseñas)
 export const useReviews = (beerId: string | undefined) => {
   return useQuery({
     queryKey: ["reviews", beerId],
@@ -18,7 +18,6 @@ export const useReviews = (beerId: string | undefined) => {
         .from("reviews")
         .select("*")
         .eq("beer_id", beerId)
-        .eq("approved", true) // Solo mostrar reseñas aprobadas
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -42,8 +41,7 @@ export const useBeerRating = (beerId: string | undefined) => {
       const { data, error } = await supabase
         .from("reviews")
         .select("rating")
-        .eq("beer_id", beerId)
-        .eq("approved", true);
+        .eq("beer_id", beerId);
 
       if (error) {
         console.error("Error fetching rating:", error);
@@ -77,8 +75,7 @@ export const useAllBeerRatings = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("reviews")
-        .select("beer_id, rating")
-        .eq("approved", true); // Solo contar reseñas aprobadas
+        .select("beer_id, rating");
 
       if (error) {
         console.error("Error fetching all ratings:", error);
@@ -112,12 +109,11 @@ export const useAllBeerRatings = () => {
   });
 };
 
-// Hook para obtener todas las reseñas pendientes (para el dashboard)
-export const usePendingReviews = () => {
+// Hook para obtener todas las reseñas (para el dashboard)
+export const useAllReviews = () => {
   return useQuery({
-    queryKey: ["pending-reviews"],
+    queryKey: ["all-reviews"],
     queryFn: async () => {
-      // Temporalmente deshabilitar RLS para obtener todas las reseñas
       const { data, error } = await supabase
         .from("reviews")
         .select(`
@@ -127,11 +123,10 @@ export const usePendingReviews = () => {
             image
           )
         `)
-        .eq("approved", false)
         .order("created_at", { ascending: false });
 
       if (error) {
-        console.error("Error fetching pending reviews:", error);
+        console.error("Error fetching all reviews:", error);
         throw error;
       }
 
