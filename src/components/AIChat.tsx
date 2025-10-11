@@ -50,8 +50,8 @@ const isBeerStyle = (value: string): boolean => {
 
 const isFlavor = (value: string): boolean => {
   const flavors = [
-    'cítrico', 'tropical', 'chocolate', 'café', 'caramelo', 'frutal', 
-    'nuez', 'herbal', 'pan tostado', 'durazno', 'frutos rojos', 'naranja'
+    'cítrico', 'tropical', 'amargo', 'chocolate', 'café', 'caramelo', 
+    'malta', 'frutal', 'especiado', 'tostado', 'suave', 'refrescante'
   ];
   return flavors.some(flavor => value.toLowerCase().includes(flavor));
 };
@@ -70,7 +70,7 @@ const isColor = (value: string): boolean => {
 };
 
 const isBitterness = (value: string): boolean => {
-  const bitterness = ['suave', 'moderado', 'amargo', 'low', 'medium', 'high'];
+  const bitterness = ['bajo', 'alto', 'low', 'high'];
   return bitterness.some(bitter => value.toLowerCase().includes(bitter));
 };
 
@@ -217,6 +217,7 @@ const allAnswersPool = {
     "🍋 Buscar por sabor específico",
     "🎨 Buscar por color",
     "💪 Encontrar por intensidad",
+    "😤 Buscar por nivel de amargor",
     "🎯 Búsqueda completa personalizada"
   ],
   
@@ -253,16 +254,16 @@ const allAnswersPool = {
   flavor: [
     "🍋 Cítrico",
     "🥥 Tropical",
+    "🌿 Amargo",
     "🍫 Chocolate",
     "☕ Café",
     "🍯 Caramelo",
+    "🌾 Malta",
     "🍓 Frutal",
-    "🌰 Nuez",
-    "🌿 Herbal",
-    "🍞 Pan tostado",
-    "🍑 Durazno",
-    "🫐 Frutos rojos",
-    "🍊 Naranja"
+    "🌶️ Especiado",
+    "🔥 Tostado",
+    "💫 Suave",
+    "❄️ Refrescante"
   ],
 
   intensity: [
@@ -283,9 +284,8 @@ const allAnswersPool = {
   ],
 
   bitterness: [
-    "🪶 Suave (< 30 IBU)",
-    "⚖️ Moderado (30-50 IBU)",
-    "🔥 Amargo (> 50 IBU)"
+    "😊 Bajo (< 30 IBU)",
+    "😤 Alto (> 50 IBU)"
   ]
 };
 
@@ -698,7 +698,7 @@ export const AIChat = ({ isOpen, onClose, onSearch, onStartSearch }: AIChatProps
           nextStep = 'color';
         } else if (answer.includes('intensidad')) {
           nextStep = 'intensity';
-        } else if (answer.includes('amargo') || answer.includes('amargor')) {
+        } else if (answer.includes('amargo') || answer.includes('amargor') || answer.includes('nivel de amargor')) {
           nextStep = 'bitterness';
         } else if (answer.includes('completa')) {
           // Búsqueda completa - empezar con el primer paso
