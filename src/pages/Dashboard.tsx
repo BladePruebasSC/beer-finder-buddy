@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { OptimizedImage } from "@/components/OptimizedImage";
 import { useBeers, useCreateBeer, useUpdateBeer, useDeleteBeer, type Beer } from "@/hooks/useBeers";
-import { getFilters, addFilterOption, updateFilterOption, deleteFilterOption, type FilterOption } from "@/lib/filterStorage";
+import { getFilters, addFilterOption, updateFilterOption, deleteFilterOption, type FilterOption, type Filters } from "@/lib/filterStorage";
 import { uploadBeerImage, replaceBeerImage } from "@/lib/uploadImage";
 import { toast } from "sonner";
 import { Trash2, Edit, Plus, LogOut, Beer as BeerIcon, Filter, Loader2, Upload, X, MessageSquare, TrendingUp } from "lucide-react";
@@ -32,11 +32,11 @@ const Dashboard = () => {
   const [editingBeer, setEditingBeer] = useState<Beer | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   
-  const [filters, setFilters] = useState<any>(null);
+  const [filters, setFilters] = useState<Filters | null>(null);
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
   const [editingFilter, setEditingFilter] = useState<{ category: string; option: FilterOption } | null>(null);
   const [filterFormData, setFilterFormData] = useState({
-    category: "style" as any,
+    category: "style" as keyof Filters,
     id: "",
     label: "",
     icon: "",
@@ -254,7 +254,7 @@ const Dashboard = () => {
   const handleFilterEdit = (category: string, option: FilterOption) => {
     setEditingFilter({ category, option });
     setFilterFormData({
-      category: category as any,
+      category: category as keyof Filters,
       id: option.id,
       label: option.label,
       icon: option.icon,
@@ -262,7 +262,7 @@ const Dashboard = () => {
     setIsFilterDialogOpen(true);
   };
 
-  const handleFilterDelete = async (category: any, optionId: string) => {
+  const handleFilterDelete = async (category: keyof Filters, optionId: string) => {
     if (window.confirm("¿Estás seguro de eliminar este filtro?")) {
       try {
         await deleteFilterOption(category, optionId);

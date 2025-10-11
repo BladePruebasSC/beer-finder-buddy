@@ -865,7 +865,36 @@ export const AIChat = ({ isOpen, onClose, onSearch, onStartSearch }: AIChatProps
                 {conversationSteps[currentStep].answers.map((answer, index) => {
                   // Extraer el valor del filtro (texto después del emoji)
                   const filterValue = answer.split(' ').slice(1).join(' ');
-                  const count = filterStats[filterValue] || 0;
+                  
+                  // Obtener el contador solo si el valor exacto existe en filterStats
+                  // Esto asegura que solo se muestren estadísticas de la categoría correcta
+                  let count = 0;
+                  
+                  // Buscar coincidencia exacta o parcial dependiendo de la categoría
+                  if (currentStep === 'country') {
+                    // Para países, buscar coincidencia exacta
+                    count = filterStats[filterValue] || 0;
+                  } else if (currentStep === 'style') {
+                    // Para estilos, buscar coincidencia exacta
+                    count = filterStats[filterValue] || 0;
+                  } else if (currentStep === 'flavor') {
+                    // Para sabores, buscar coincidencia exacta
+                    count = filterStats[filterValue] || 0;
+                  } else if (currentStep === 'intensity') {
+                    // Para intensidad, buscar por palabras clave
+                    if (filterValue.includes('Ligera')) count = filterStats['Ligera'] || filterStats['light'] || 0;
+                    else if (filterValue.includes('Media')) count = filterStats['Media'] || filterStats['medium'] || 0;
+                    else if (filterValue.includes('Fuerte')) count = filterStats['Fuerte'] || filterStats['strong'] || 0;
+                  } else if (currentStep === 'color') {
+                    // Para colores, buscar por palabras clave
+                    const colorMatch = filterValue.match(/Rubia|Dorado|Ámbar|Rojo|Marrón|Negro|Turbio/);
+                    if (colorMatch) count = filterStats[colorMatch[0]] || 0;
+                  } else if (currentStep === 'bitterness') {
+                    // Para amargor, buscar por palabras clave
+                    if (filterValue.includes('Suave')) count = filterStats['Suave'] || filterStats['low'] || 0;
+                    else if (filterValue.includes('Moderado')) count = filterStats['Moderado'] || filterStats['medium'] || 0;
+                    else if (filterValue.includes('Amargo')) count = filterStats['Amargo'] || filterStats['high'] || 0;
+                  }
                   
                   return (
                     <Button

@@ -65,6 +65,19 @@ const Index = () => {
     return () => window.removeEventListener("keydown", handleKeyPress);
   }, [navigate]);
 
+  useEffect(() => {
+    // Cargar filtros al montar el componente
+    const loadFilters = async () => {
+      try {
+        const loadedFilters = await getFilters();
+        setFilters(loadedFilters);
+      } catch (error) {
+        console.error('Error cargando filtros:', error);
+      }
+    };
+    loadFilters();
+  }, []);
+
   const aiMessages = [
     "¡Hola! Soy tu sommelier de cervezas con IA 🍺",
     "Cuéntame, ¿qué tipo de cerveza te apetece hoy?",
@@ -232,6 +245,10 @@ const Index = () => {
   ];
 
   const getFilterData = (categoryId: string) => {
+    // Si los filtros aún no se han cargado, retornar estructura vacía
+    if (!filters) {
+      return { title: categoryId, options: [] };
+    }
     const filterData = filters[categoryId as keyof typeof filters];
     // Si no existe el filtro (ej: origin en localStorage antiguo), retornar estructura vacía
     return filterData || { title: categoryId, options: [] };
