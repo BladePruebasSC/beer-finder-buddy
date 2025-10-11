@@ -6,12 +6,14 @@ import { BeerCard } from "@/components/BeerCard";
 import { AIChat } from "@/components/AIChat";
 import { BeerAILoader } from "@/components/BeerAILoader";
 import { useBeers } from "@/hooks/useBeers";
+import { useAllBeerRatings } from "@/hooks/useReviews";
 import { Beer as BeerIcon, ArrowLeft, Loader2, Sparkles, MessageCircle } from "lucide-react";
 
 const Catalog = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { data: beers = [], isLoading } = useBeers();
+  const { data: allRatings } = useAllBeerRatings();
   const [showContent, setShowContent] = useState(false);
   const [aiMessage, setAiMessage] = useState("");
   const [showAiMessage, setShowAiMessage] = useState(false);
@@ -47,7 +49,7 @@ const Catalog = () => {
   console.log('[Catalog] selectedFilters:', selectedFilters);
 
   const filteredBeers = useMemo(() => {
-    return beers.filter((beer) => {
+    const filtered = beers.filter((beer) => {
       if (selectedFilters.style.length > 0 && !selectedFilters.style.includes(beer.style)) {
         return false;
       }
@@ -89,7 +91,22 @@ const Catalog = () => {
 
       return true;
     });
-  }, [beers, selectedFilters]);
+
+    // Ordenar por calificación (mejor calificación primero)
+    return filtered.sort((a, b) => {
+      const ratingA = allRatings?.[a.id]?.average_rating || 0;
+      const ratingB = allRatings?.[b.id]?.average_rating || 0;
+      
+      // Si tienen la misma calificación, ordenar por número de reseñas
+      if (ratingA === ratingB) {
+        const reviewsA = allRatings?.[a.id]?.total_reviews || 0;
+        const reviewsB = allRatings?.[b.id]?.total_reviews || 0;
+        return reviewsB - reviewsA; // Más reseñas primero
+      }
+      
+      return ratingB - ratingA; // Mejor calificación primero
+    });
+  }, [beers, selectedFilters, allRatings]);
 
   const hasActiveFilters = Object.values(selectedFilters).some((filters: any) => filters.length > 0);
 

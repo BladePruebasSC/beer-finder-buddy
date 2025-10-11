@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { X, Send, MessageCircle, Bot, User, TrendingUp } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { BeerAILoader } from "@/components/BeerAILoader";
 import { updateFilterStats, getFilterStats } from "@/lib/filterStats";
 
@@ -45,6 +45,10 @@ const addDynamicFilter = (category: keyof typeof allAnswersPool, newFilter: stri
 const sortAnswersByPopularity = (answers: string[], category: string): string[] => {
   const filterStats = getFilterStats();
   
+  console.log('🔍 sortAnswersByPopularity - category:', category);
+  console.log('🔍 sortAnswersByPopularity - answers:', answers);
+  console.log('🔍 sortAnswersByPopularity - filterStats:', filterStats);
+  
   return [...answers].sort((a, b) => {
     // Extraer el valor del filtro de la respuesta (después del emoji)
     const extractFilter = (answer: string) => {
@@ -56,8 +60,93 @@ const sortAnswersByPopularity = (answers: string[], category: string): string[] 
     const filterA = extractFilter(a);
     const filterB = extractFilter(b);
     
-    const countA = filterStats[filterA] || 0;
-    const countB = filterStats[filterB] || 0;
+    // Para opciones iniciales, buscar estadísticas de las acciones correspondientes
+    let countA = 0;
+    let countB = 0;
+    
+    if (category === 'initial') {
+      // Mapear opciones iniciales a sus categorías correspondientes para buscar estadísticas
+      if (filterA.includes('país') || filterA.includes('origen')) {
+        countA = Object.keys(filterStats).filter(key => 
+          key.includes('República Dominicana') || key.includes('Estados Unidos') || 
+          key.includes('México') || key.includes('Alemania') || key.includes('Bélgica') ||
+          key.includes('Reino Unido') || key.includes('España') || key.includes('Irlanda') ||
+          key.includes('República Checa') || key.includes('Japón') || key.includes('Brasil') ||
+          key.includes('Argentina') || key.includes('Chile')
+        ).reduce((sum, key) => sum + (filterStats[key] || 0), 0);
+      } else if (filterA.includes('estilo')) {
+        countA = Object.keys(filterStats).filter(key => 
+          key.includes('IPA') || key.includes('Stout') || key.includes('Lager') ||
+          key.includes('Amber') || key.includes('Wheat') || key.includes('Hazy') ||
+          key.includes('Porter') || key.includes('Red Ale') || key.includes('Pilsner') ||
+          key.includes('Pale Ale') || key.includes('Sour') || key.includes('Belgian')
+        ).reduce((sum, key) => sum + (filterStats[key] || 0), 0);
+      } else if (filterA.includes('sabor')) {
+        countA = Object.keys(filterStats).filter(key => 
+          key.includes('Cítrico') || key.includes('Tropical') || key.includes('Chocolate') ||
+          key.includes('Café') || key.includes('Caramelo') || key.includes('Frutal') ||
+          key.includes('Nuez') || key.includes('Herbal') || key.includes('Pan tostado') ||
+          key.includes('Durazno') || key.includes('Frutos rojos') || key.includes('Naranja')
+        ).reduce((sum, key) => sum + (filterStats[key] || 0), 0);
+      } else if (filterA.includes('intensidad')) {
+        countA = Object.keys(filterStats).filter(key => 
+          key.includes('Ligera') || key.includes('Media') || key.includes('Fuerte')
+        ).reduce((sum, key) => sum + (filterStats[key] || 0), 0);
+      } else if (filterA.includes('color')) {
+        countA = Object.keys(filterStats).filter(key => 
+          key.includes('Rubia') || key.includes('Ámbar') || key.includes('Marrón') ||
+          key.includes('Negra') || key.includes('Roja') || key.includes('Verde') ||
+          key.includes('Clara') || key.includes('Púrpura')
+        ).reduce((sum, key) => sum + (filterStats[key] || 0), 0);
+      } else if (filterA.includes('amargo') || filterA.includes('amargor')) {
+        countA = Object.keys(filterStats).filter(key => 
+          key.includes('Suave') || key.includes('Moderado') || key.includes('Amargo')
+        ).reduce((sum, key) => sum + (filterStats[key] || 0), 0);
+      }
+      
+      // Hacer lo mismo para filterB
+      if (filterB.includes('país') || filterB.includes('origen')) {
+        countB = Object.keys(filterStats).filter(key => 
+          key.includes('República Dominicana') || key.includes('Estados Unidos') || 
+          key.includes('México') || key.includes('Alemania') || key.includes('Bélgica') ||
+          key.includes('Reino Unido') || key.includes('España') || key.includes('Irlanda') ||
+          key.includes('República Checa') || key.includes('Japón') || key.includes('Brasil') ||
+          key.includes('Argentina') || key.includes('Chile')
+        ).reduce((sum, key) => sum + (filterStats[key] || 0), 0);
+      } else if (filterB.includes('estilo')) {
+        countB = Object.keys(filterStats).filter(key => 
+          key.includes('IPA') || key.includes('Stout') || key.includes('Lager') ||
+          key.includes('Amber') || key.includes('Wheat') || key.includes('Hazy') ||
+          key.includes('Porter') || key.includes('Red Ale') || key.includes('Pilsner') ||
+          key.includes('Pale Ale') || key.includes('Sour') || key.includes('Belgian')
+        ).reduce((sum, key) => sum + (filterStats[key] || 0), 0);
+      } else if (filterB.includes('sabor')) {
+        countB = Object.keys(filterStats).filter(key => 
+          key.includes('Cítrico') || key.includes('Tropical') || key.includes('Chocolate') ||
+          key.includes('Café') || key.includes('Caramelo') || key.includes('Frutal') ||
+          key.includes('Nuez') || key.includes('Herbal') || key.includes('Pan tostado') ||
+          key.includes('Durazno') || key.includes('Frutos rojos') || key.includes('Naranja')
+        ).reduce((sum, key) => sum + (filterStats[key] || 0), 0);
+      } else if (filterB.includes('intensidad')) {
+        countB = Object.keys(filterStats).filter(key => 
+          key.includes('Ligera') || key.includes('Media') || key.includes('Fuerte')
+        ).reduce((sum, key) => sum + (filterStats[key] || 0), 0);
+      } else if (filterB.includes('color')) {
+        countB = Object.keys(filterStats).filter(key => 
+          key.includes('Rubia') || key.includes('Ámbar') || key.includes('Marrón') ||
+          key.includes('Negra') || key.includes('Roja') || key.includes('Verde') ||
+          key.includes('Clara') || key.includes('Púrpura')
+        ).reduce((sum, key) => sum + (filterStats[key] || 0), 0);
+      } else if (filterB.includes('amargo') || filterB.includes('amargor')) {
+        countB = Object.keys(filterStats).filter(key => 
+          key.includes('Suave') || key.includes('Moderado') || key.includes('Amargo')
+        ).reduce((sum, key) => sum + (filterStats[key] || 0), 0);
+      }
+    } else {
+      // Para otras categorías, usar el método original
+      countA = filterStats[filterA] || 0;
+      countB = filterStats[filterB] || 0;
+    }
     
     return countB - countA; // Orden descendente (más usadas primero)
   });
@@ -83,6 +172,7 @@ const allAnswersPool = {
     "🌍 Buscar por país de origen",
     "🍺 Recomendarme por estilo",
     "🍋 Buscar por sabor específico",
+    "🎨 Buscar por color",
     "💪 Encontrar por intensidad",
     "🎯 Búsqueda completa personalizada"
   ],
@@ -136,6 +226,23 @@ const allAnswersPool = {
     "🪶 Ligera (< 5% ABV)",
     "⚖️ Media (5-6.5% ABV)",
     "💪 Fuerte (> 6.5% ABV)"
+  ],
+
+  color: [
+    "🟡 Rubia",
+    "🟠 Ámbar",
+    "🟤 Marrón",
+    "⚫ Negra",
+    "🔴 Roja",
+    "🟢 Verde",
+    "⚪ Clara",
+    "🟣 Púrpura"
+  ],
+
+  bitterness: [
+    "🪶 Suave (< 30 IBU)",
+    "⚖️ Moderado (30-50 IBU)",
+    "🔥 Amargo (> 50 IBU)"
   ]
 };
 
@@ -143,9 +250,12 @@ const allAnswersPool = {
 const getDynamicAnswers = (category: keyof typeof allAnswersPool): string[] => {
   const allOptions = allAnswersPool[category];
   
-  // Para la categoría 'initial', solo mostrar las opciones predefinidas sin filtros específicos
+  // Para la categoría 'initial', mostrar las opciones predefinidas ordenadas por popularidad
   if (category === 'initial') {
-    return allOptions;
+    const sortedOptions = sortAnswersByPopularity(allOptions, category);
+    console.log('🔍 getDynamicAnswers - allOptions:', allOptions);
+    console.log('🔍 getDynamicAnswers - sortedOptions:', sortedOptions);
+    return sortedOptions;
   }
   
   const filterStats = getFilterStats();
@@ -189,6 +299,10 @@ const getDynamicAnswers = (category: keyof typeof allAnswersPool): string[] => {
         emoji = '🍋';
       } else if (category === 'intensity') {
         emoji = '💪';
+      } else if (category === 'color') {
+        emoji = '🎨';
+      } else if (category === 'bitterness') {
+        emoji = '🔥';
       }
       
       expandedOptions.push(`${emoji} ${filterValue}`);
@@ -240,15 +354,30 @@ const conversationSteps = {
     }
   },
 
+  color: {
+    question: "¡Genial! ¿Qué color de cerveza prefieres?",
+    get answers() {
+      return getDynamicAnswers('color');
+    }
+  },
+
   intensity: {
     question: "¡Perfecto! ¿Qué intensidad prefieres?",
     get answers() {
       return getDynamicAnswers('intensity');
     }
+  },
+
+  bitterness: {
+    question: "¡Excelente! ¿Qué nivel de amargor prefieres?",
+    get answers() {
+      return getDynamicAnswers('bitterness');
+    }
   }
 };
 
 export const AIChat = ({ isOpen, onClose, onSearch, onStartSearch }: AIChatProps) => {
+  const location = useLocation();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -257,7 +386,7 @@ export const AIChat = ({ isOpen, onClose, onSearch, onStartSearch }: AIChatProps
       timestamp: new Date()
     }
   ]);
-  const [currentStep, setCurrentStep] = useState<'initial' | 'country' | 'style' | 'flavor' | 'intensity'>('initial');
+  const [currentStep, setCurrentStep] = useState<'initial' | 'country' | 'style' | 'flavor' | 'color' | 'intensity' | 'bitterness'>('initial');
   const [selectedFilters, setSelectedFilters] = useState<any>({
     style: [],
     color: [],
@@ -482,19 +611,15 @@ export const AIChat = ({ isOpen, onClose, onSearch, onStartSearch }: AIChatProps
           nextStep = 'style';
         } else if (answer.includes('sabor')) {
           nextStep = 'flavor';
+        } else if (answer.includes('color')) {
+          nextStep = 'color';
         } else if (answer.includes('intensidad')) {
           nextStep = 'intensity';
+        } else if (answer.includes('amargo') || answer.includes('amargor')) {
+          nextStep = 'bitterness';
         } else if (answer.includes('completa')) {
-          // Búsqueda completa - ir directamente al catálogo
-          setTimeout(() => {
-            addTypingMessage('¡Perfecto! Te voy a mostrar todas nuestras cervezas disponibles 🍺', () => {
-              setTimeout(() => {
-                onStartSearch?.(); // Iniciar búsqueda en el componente padre
-                onSearch({}); // Pasar filtros vacíos para catálogo completo
-              }, 500);
-            });
-          }, 800); // Reducido de 1500ms a 800ms
-          return;
+          // Búsqueda completa - empezar con el primer paso
+          nextStep = 'country';
         }
       } else {
         // Procesar la selección específica y registrar el filtro usado
@@ -514,6 +639,8 @@ export const AIChat = ({ isOpen, onClose, onSearch, onStartSearch }: AIChatProps
           else if (answer.includes("Brasil")) { selectedCountry = "Brasil"; updatedFilters.origin = [selectedCountry]; }
           else if (answer.includes("Argentina")) { selectedCountry = "Argentina"; updatedFilters.origin = [selectedCountry]; }
           
+          console.log('🔍 País seleccionado:', selectedCountry);
+          console.log('🔍 updatedFilters después de país:', updatedFilters);
           if (selectedCountry) updateFilterStats(selectedCountry);
         } else if (currentStep === 'style') {
           // Extraer el estilo correctamente
@@ -556,20 +683,72 @@ export const AIChat = ({ isOpen, onClose, onSearch, onStartSearch }: AIChatProps
           else if (answer.includes("Fuerte")) { selectedIntensity = "Fuerte"; updatedFilters.strength = ["strong"]; }
           
           if (selectedIntensity) updateFilterStats(selectedIntensity);
+        } else if (currentStep === 'color') {
+          let selectedColor = "";
+          if (answer.includes("Rubia")) { selectedColor = "Rubia"; updatedFilters.color = [selectedColor]; }
+          else if (answer.includes("Ámbar")) { selectedColor = "Ámbar"; updatedFilters.color = [selectedColor]; }
+          else if (answer.includes("Marrón")) { selectedColor = "Marrón"; updatedFilters.color = [selectedColor]; }
+          else if (answer.includes("Negra")) { selectedColor = "Negra"; updatedFilters.color = [selectedColor]; }
+          else if (answer.includes("Roja")) { selectedColor = "Roja"; updatedFilters.color = [selectedColor]; }
+          else if (answer.includes("Verde")) { selectedColor = "Verde"; updatedFilters.color = [selectedColor]; }
+          else if (answer.includes("Clara")) { selectedColor = "Clara"; updatedFilters.color = [selectedColor]; }
+          else if (answer.includes("Púrpura")) { selectedColor = "Púrpura"; updatedFilters.color = [selectedColor]; }
+          
+          if (selectedColor) updateFilterStats(selectedColor);
+        } else if (currentStep === 'bitterness') {
+          let selectedBitterness = "";
+          if (answer.includes("Suave")) { selectedBitterness = "Suave"; updatedFilters.bitterness = ["low"]; }
+          else if (answer.includes("Moderado")) { selectedBitterness = "Moderado"; updatedFilters.bitterness = ["medium"]; }
+          else if (answer.includes("Amargo")) { selectedBitterness = "Amargo"; updatedFilters.bitterness = ["high"]; }
+          
+          if (selectedBitterness) updateFilterStats(selectedBitterness);
         }
 
-        // Finalizar después de cualquier selección específica
-        setTimeout(() => {
-          addTypingMessage('¡Perfecto! Basándome en tus preferencias, voy a buscar las cervezas ideales para ti 🎯', () => {
+        // Determinar si continuar con la búsqueda completa o finalizar
+        const isCompleteSearch = location.state?.from === 'complete-search' || 
+                                messages.some(msg => msg.content.includes('completa'));
+        
+        if (isCompleteSearch) {
+          // Búsqueda completa - determinar el siguiente paso
+          if (currentStep === 'country') {
+            nextStep = 'style';
+          } else if (currentStep === 'style') {
+            nextStep = 'flavor';
+          } else if (currentStep === 'flavor') {
+            nextStep = 'color';
+          } else if (currentStep === 'color') {
+            nextStep = 'intensity';
+          } else if (currentStep === 'intensity') {
+            nextStep = 'bitterness';
+          } else if (currentStep === 'bitterness') {
+            // Finalizar la búsqueda completa
             setTimeout(() => {
-              console.log('🔍 Filtros desde chat:', updatedFilters); // Debug
-              setRefreshAnswers(prev => prev + 1); // Actualizar respuestas dinámicas
-              onStartSearch?.(); // Iniciar búsqueda en el componente padre
-              onSearch(updatedFilters); // Pasar los filtros
-            }, 500);
-          });
-        }, 800); // Reducido de 1500ms a 800ms
-        return;
+              addTypingMessage('¡Perfecto! Basándome en todas tus preferencias, voy a buscar las cervezas ideales para ti 🎯', () => {
+                setTimeout(() => {
+                  console.log('🔍 Filtros desde chat:', updatedFilters); // Debug
+                  setRefreshAnswers(prev => prev + 1); // Actualizar respuestas dinámicas
+                  onStartSearch?.(); // Iniciar búsqueda en el componente padre
+                  onSearch(updatedFilters); // Pasar los filtros
+                }, 500);
+              });
+            }, 800);
+            return;
+          }
+        } else {
+          // Búsqueda normal - finalizar después de cualquier selección específica
+          console.log('🔍 Búsqueda normal - updatedFilters antes de enviar:', updatedFilters);
+          setTimeout(() => {
+            addTypingMessage('¡Perfecto! Basándome en tus preferencias, voy a buscar las cervezas ideales para ti 🎯', () => {
+              setTimeout(() => {
+                console.log('🔍 Filtros desde chat:', updatedFilters); // Debug
+                setRefreshAnswers(prev => prev + 1); // Actualizar respuestas dinámicas
+                onStartSearch?.(); // Iniciar búsqueda en el componente padre
+                onSearch(updatedFilters); // Pasar los filtros
+              }, 500);
+            });
+          }, 800);
+          return;
+        }
       }
 
       setSelectedFilters(updatedFilters);
