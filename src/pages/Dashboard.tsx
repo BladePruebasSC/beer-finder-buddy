@@ -32,11 +32,11 @@ const Dashboard = () => {
   const [editingBeer, setEditingBeer] = useState<Beer | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   
-  const [filters, setFilters] = useState(getFilters());
+  const [filters, setFilters] = useState<any>(null);
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
   const [editingFilter, setEditingFilter] = useState<{ category: string; option: FilterOption } | null>(null);
   const [filterFormData, setFilterFormData] = useState({
-    category: "style" as keyof typeof filters,
+    category: "style" as any,
     id: "",
     label: "",
     icon: "",
@@ -67,8 +67,19 @@ const Dashboard = () => {
     }
   }, []);
 
-  const loadFilters = () => {
-    setFilters(getFilters());
+  useEffect(() => {
+    // Cargar filtros al montar el componente
+    loadFilters();
+  }, []);
+
+  const loadFilters = async () => {
+    try {
+      const loadedFilters = await getFilters();
+      setFilters(loadedFilters);
+    } catch (error) {
+      console.error('Error cargando filtros:', error);
+      toast.error('Error cargando filtros');
+    }
   };
 
   const handleLogin = (e: React.FormEvent) => {
@@ -243,7 +254,7 @@ const Dashboard = () => {
   const handleFilterEdit = (category: string, option: FilterOption) => {
     setEditingFilter({ category, option });
     setFilterFormData({
-      category: category as keyof typeof filters,
+      category: category as any,
       id: option.id,
       label: option.label,
       icon: option.icon,
@@ -251,15 +262,20 @@ const Dashboard = () => {
     setIsFilterDialogOpen(true);
   };
 
-  const handleFilterDelete = (category: keyof typeof filters, optionId: string) => {
+  const handleFilterDelete = async (category: any, optionId: string) => {
     if (window.confirm("¿Estás seguro de eliminar este filtro?")) {
-      deleteFilterOption(category, optionId);
-      loadFilters();
-      toast.success("Filtro eliminado");
+      try {
+        await deleteFilterOption(category, optionId);
+        await loadFilters();
+        toast.success("Filtro eliminado");
+      } catch (error) {
+        console.error('Error eliminando filtro:', error);
+        toast.error('Error eliminando filtro');
+      }
     }
   };
 
-  const handleFilterSubmit = (e: React.FormEvent) => {
+  const handleFilterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     const filterOption: FilterOption = {
@@ -268,17 +284,22 @@ const Dashboard = () => {
       icon: filterFormData.icon,
     };
 
-    if (editingFilter) {
-      updateFilterOption(filterFormData.category, editingFilter.option.id, filterOption);
-      toast.success("Filtro actualizado");
-    } else {
-      addFilterOption(filterFormData.category, filterOption);
-      toast.success("Filtro añadido");
-    }
+    try {
+      if (editingFilter) {
+        await updateFilterOption(filterFormData.category, editingFilter.option.id, filterOption);
+        toast.success("Filtro actualizado");
+      } else {
+        await addFilterOption(filterFormData.category, filterOption);
+        toast.success("Filtro añadido");
+      }
 
-    loadFilters();
-    setIsFilterDialogOpen(false);
-    resetFilterForm();
+      await loadFilters();
+      setIsFilterDialogOpen(false);
+      resetFilterForm();
+    } catch (error) {
+      console.error('Error guardando filtro:', error);
+      toast.error('Error guardando filtro');
+    }
   };
 
   if (!isAuthenticated) {

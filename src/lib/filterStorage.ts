@@ -1,4 +1,5 @@
 import { filterCategories } from "@/data/filters";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface FilterOption {
   id: string;
@@ -22,6 +23,7 @@ export interface Filters {
 
 const FILTERS_KEY = "filters_catalog";
 
+// Función para inicializar filtros (mantener por compatibilidad con localStorage)
 export const initializeFilters = () => {
   const stored = localStorage.getItem(FILTERS_KEY);
   if (!stored) {
@@ -42,26 +44,132 @@ export const initializeFilters = () => {
   }
 };
 
-export const getFilters = (): Filters => {
+// Función para obtener filtros desde Supabase (con fallback a localStorage)
+export const getFilters = async (): Promise<Filters> => {
+  try {
+    const { data, error } = await supabase
+      .from("filter_options")
+      .select("*")
+      .order("category", { ascending: true });
+
+    if (error) {
+      console.error('Error obteniendo filtros desde Supabase:', error);
+      return getLocalFilters();
+    }
+
+    // Si no hay datos en Supabase, usar valores por defecto y migrar
+    if (!data || data.length === 0) {
+      console.log('No hay filtros en Supabase, usando valores por defecto');
+      return filterCategories;
+    }
+
+    // Convertir datos de Supabase a estructura de Filters
+    const filters: Filters = {
+      style: { title: "Estilo", options: [] },
+      color: { title: "Color", options: [] },
+      flavor: { title: "Sabor", options: [] },
+      strength: { title: "Graduación", options: [] },
+      bitterness: { title: "Amargor", options: [] },
+      origin: { title: "Origen", options: [] },
+    };
+
+    data.forEach((option: any) => {
+      const category = option.category as keyof Filters;
+      if (filters[category]) {
+        filters[category].options.push({
+          id: option.id,
+          label: option.label,
+          icon: option.icon,
+        });
+      }
+    });
+
+    console.log('✅ Filtros cargados desde Supabase');
+    return filters;
+  } catch (error) {
+    console.error('Error obteniendo filtros:', error);
+    return getLocalFilters();
+  }
+};
+
+// Fallback para obtener filtros desde localStorage
+const getLocalFilters = (): Filters => {
   initializeFilters();
   const stored = localStorage.getItem(FILTERS_KEY);
   return stored ? JSON.parse(stored) : filterCategories;
 };
 
-export const addFilterOption = (category: keyof Filters, option: FilterOption): void => {
-  const filters = getFilters();
-  if (!filters[category].options.find(opt => opt.id === option.id)) {
-    filters[category].options.push(option);
-    localStorage.setItem(FILTERS_KEY, JSON.stringify(filters));
+// Función para agregar opción de filtro en Supabase
+export const addFilterOption = async (category: keyof Filters, option: FilterOption): Promise<void> => {
+  try {
+    const { error } = await supabase.from("filter_options").insert({
+      id: option.id,
+      category: category,
+      label: option.label,
+      icon: option.icon,
+      is_default: false,
+    });
+
+    if (error) {
+      console.error('Error agregando opción de filtro en Supabase:', error);
+      // Fallback a localStorage
+      addLocalFilterOption(category, option);
+    } else {
+      console.log('✅ Opción de filtro agregada en Supabase:', option.label);
+    }
+  } catch (error) {
+    console.error('Error agregando opción de filtro:', error);
+    addLocalFilterOption(category, option);
   }
 };
 
-export const updateFilterOption = (
+// Fallback para agregar en localStorage
+const addLocalFilterOption = (category: keyof Filters, option: FilterOption): void => {
+  const filters = getLocalFilters();
+  if (!filters[category].options.find(opt => opt.id === option.id)) {
+    filters[category].options.push(option);
+    localStorage.setItem(FILTERS_KEY, JSON.stringify(filters));
+    console.log('✅ Opción de filtro agregada en localStorage:', option.label);
+  }
+};
+
+// Función para actualizar opción de filtro en Supabase
+export const updateFilterOption = async (
+  category: keyof Filters, 
+  optionId: string, 
+  updates: Partial<FilterOption>
+): Promise<void> => {
+  try {
+    const { error } = await supabase
+      .from("filter_options")
+      .update({
+        label: updates.label,
+        icon: updates.icon,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", optionId)
+      .eq("category", category);
+
+    if (error) {
+      console.error('Error actualizando opción de filtro en Supabase:', error);
+      // Fallback a localStorage
+      updateLocalFilterOption(category, optionId, updates);
+    } else {
+      console.log('✅ Opción de filtro actualizada en Supabase');
+    }
+  } catch (error) {
+    console.error('Error actualizando opción de filtro:', error);
+    updateLocalFilterOption(category, optionId, updates);
+  }
+};
+
+// Fallback para actualizar en localStorage
+const updateLocalFilterOption = (
   category: keyof Filters, 
   optionId: string, 
   updates: Partial<FilterOption>
 ): void => {
-  const filters = getFilters();
+  const filters = getLocalFilters();
   const index = filters[category].options.findIndex(opt => opt.id === optionId);
   if (index !== -1) {
     filters[category].options[index] = { 
@@ -69,11 +177,36 @@ export const updateFilterOption = (
       ...updates 
     };
     localStorage.setItem(FILTERS_KEY, JSON.stringify(filters));
+    console.log('✅ Opción de filtro actualizada en localStorage');
   }
 };
 
-export const deleteFilterOption = (category: keyof Filters, optionId: string): void => {
-  const filters = getFilters();
+// Función para eliminar opción de filtro en Supabase
+export const deleteFilterOption = async (category: keyof Filters, optionId: string): Promise<void> => {
+  try {
+    const { error } = await supabase
+      .from("filter_options")
+      .delete()
+      .eq("id", optionId)
+      .eq("category", category);
+
+    if (error) {
+      console.error('Error eliminando opción de filtro en Supabase:', error);
+      // Fallback a localStorage
+      deleteLocalFilterOption(category, optionId);
+    } else {
+      console.log('✅ Opción de filtro eliminada en Supabase');
+    }
+  } catch (error) {
+    console.error('Error eliminando opción de filtro:', error);
+    deleteLocalFilterOption(category, optionId);
+  }
+};
+
+// Fallback para eliminar en localStorage
+const deleteLocalFilterOption = (category: keyof Filters, optionId: string): void => {
+  const filters = getLocalFilters();
   filters[category].options = filters[category].options.filter(opt => opt.id !== optionId);
   localStorage.setItem(FILTERS_KEY, JSON.stringify(filters));
+  console.log('✅ Opción de filtro eliminada en localStorage');
 };

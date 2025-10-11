@@ -12,7 +12,7 @@ import { BeerAILoader } from "@/components/BeerAILoader";
 const Index = () => {
   const navigate = useNavigate();
   const [secretCode, setSecretCode] = useState("");
-  const [filters] = useState(getFilters());
+  const [filters, setFilters] = useState<any>(null);
   const [activeCategory, setActiveCategory] = useState<string>("style");
   const [isLoading, setIsLoading] = useState(true);
   const [isSearching, setIsSearching] = useState(false);
