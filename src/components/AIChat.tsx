@@ -30,6 +30,50 @@ const updateAnswerStats = (answer: string) => {
   localStorage.setItem(ANSWER_STATS_KEY, JSON.stringify(stats));
 };
 
+// Funciones de validación para categorías
+const isCountry = (value: string): boolean => {
+  const countries = [
+    'chile', 'méxico', 'estados unidos', 'república dominicana', 'alemania', 
+    'bélgica', 'reino unido', 'españa', 'irlanda', 'república checa', 
+    'japón', 'brasil', 'argentina', 'colombia', 'países bajos'
+  ];
+  return countries.some(country => value.toLowerCase().includes(country));
+};
+
+const isBeerStyle = (value: string): boolean => {
+  const styles = [
+    'ipa', 'stout', 'lager', 'amber', 'wheat', 'hazy', 'porter', 
+    'red ale', 'pilsner', 'pale ale', 'sour', 'belgian', 'blonde'
+  ];
+  return styles.some(style => value.toLowerCase().includes(style));
+};
+
+const isFlavor = (value: string): boolean => {
+  const flavors = [
+    'cítrico', 'tropical', 'chocolate', 'café', 'caramelo', 'frutal', 
+    'nuez', 'herbal', 'pan tostado', 'durazno', 'frutos rojos', 'naranja'
+  ];
+  return flavors.some(flavor => value.toLowerCase().includes(flavor));
+};
+
+const isIntensity = (value: string): boolean => {
+  const intensities = ['ligera', 'media', 'fuerte', 'light', 'medium', 'strong'];
+  return intensities.some(intensity => value.toLowerCase().includes(intensity));
+};
+
+const isColor = (value: string): boolean => {
+  const colors = [
+    'rubia', 'dorado', 'ámbar', 'rojo', 'marrón', 'negro', 'turbio', 
+    'verde', 'clara', 'púrpura', 'blanca'
+  ];
+  return colors.some(color => value.toLowerCase().includes(color));
+};
+
+const isBitterness = (value: string): boolean => {
+  const bitterness = ['suave', 'moderado', 'amargo', 'low', 'medium', 'high'];
+  return bitterness.some(bitter => value.toLowerCase().includes(bitter));
+};
+
 // Función para agregar nuevos filtros dinámicamente a las opciones disponibles
 const addDynamicFilter = (category: keyof typeof allAnswersPool, newFilter: string, emoji: string = '🌟') => {
   // Crear una entrada temporal para el nuevo filtro
@@ -261,6 +305,7 @@ const getDynamicAnswers = (category: keyof typeof allAnswersPool, filterStats: R
   const expandedOptions = [...allOptions];
   
   // Agregar filtros personalizados que se hayan usado antes pero no estén en las opciones predefinidas
+  // Solo agregar filtros que correspondan a la categoría actual
   Object.keys(filterStats).forEach(filterValue => {
     // Verificar si ya existe en las opciones predefinidas (comparando solo el texto, no el emoji)
     const isInPredefined = allOptions.some(option => {
@@ -268,7 +313,30 @@ const getDynamicAnswers = (category: keyof typeof allAnswersPool, filterStats: R
       return optionText.toLowerCase() === filterValue.toLowerCase();
     });
     
-    if (!isInPredefined && filterStats[filterValue] > 0) {
+    // Verificar si el filtro corresponde a la categoría actual
+    let belongsToCategory = false;
+    
+    if (category === 'country') {
+      // Solo países/países
+      belongsToCategory = isCountry(filterValue);
+    } else if (category === 'style') {
+      // Solo estilos de cerveza
+      belongsToCategory = isBeerStyle(filterValue);
+    } else if (category === 'flavor') {
+      // Solo sabores
+      belongsToCategory = isFlavor(filterValue);
+    } else if (category === 'intensity') {
+      // Solo intensidades
+      belongsToCategory = isIntensity(filterValue);
+    } else if (category === 'color') {
+      // Solo colores
+      belongsToCategory = isColor(filterValue);
+    } else if (category === 'bitterness') {
+      // Solo niveles de amargor
+      belongsToCategory = isBitterness(filterValue);
+    }
+    
+    if (!isInPredefined && filterStats[filterValue] > 0 && belongsToCategory) {
       // Determinar emoji basado en la categoría y el valor específico
       let emoji = '🌟';
       
@@ -287,7 +355,9 @@ const getDynamicAnswers = (category: keyof typeof allAnswersPool, filterStats: R
           'república checa': '🇨🇿',
           'japón': '🇯🇵',
           'brasil': '🇧🇷',
-          'argentina': '🇦🇷'
+          'argentina': '🇦🇷',
+          'colombia': '🇨🇴',
+          'países bajos': '🇳🇱'
         };
         emoji = countryFlags[filterValue.toLowerCase()] || '🌍';
       } else if (category === 'style') {

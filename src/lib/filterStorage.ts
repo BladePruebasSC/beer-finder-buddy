@@ -140,7 +140,9 @@ export const updateFilterOption = async (
   updates: Partial<FilterOption>
 ): Promise<void> => {
   try {
-    const { error } = await supabase
+    console.log('🔄 Actualizando filtro:', { category, optionId, updates });
+    
+    const { data, error } = await supabase
       .from("filter_options")
       .update({
         label: updates.label,
@@ -148,17 +150,30 @@ export const updateFilterOption = async (
         updated_at: new Date().toISOString(),
       })
       .eq("id", optionId)
-      .eq("category", category);
+      .eq("category", category)
+      .select(); // Agregar select para ver qué se actualizó
 
     if (error) {
-      console.error('Error actualizando opción de filtro en Supabase:', error);
+      console.error('❌ Error actualizando opción de filtro en Supabase:', error);
       // Fallback a localStorage
       updateLocalFilterOption(category, optionId, updates);
-    } else {
-      console.log('✅ Opción de filtro actualizada en Supabase');
+      return; // No lanzar error, usar localStorage
     }
+
+    if (!data || data.length === 0) {
+      console.warn('⚠️ No se encontró el filtro para actualizar en Supabase, usando localStorage:', { category, optionId });
+      // Fallback a localStorage
+      updateLocalFilterOption(category, optionId, updates);
+      return;
+    }
+
+    console.log('✅ Opción de filtro actualizada en Supabase:', data[0]);
+    
+    // También actualizar localStorage para sincronización
+    updateLocalFilterOption(category, optionId, updates);
   } catch (error) {
-    console.error('Error actualizando opción de filtro:', error);
+    console.error('❌ Error actualizando opción de filtro:', error);
+    // Fallback a localStorage
     updateLocalFilterOption(category, optionId, updates);
   }
 };

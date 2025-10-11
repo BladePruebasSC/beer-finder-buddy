@@ -52,8 +52,11 @@ const Index = () => {
         setSecretCode((prev) => {
           const newCode = (prev + char).slice(-5);
           if (newCode === "CDERF") {
-            sessionStorage.setItem("dashboard_auth", "true");
-            navigate("/dashboard");
+            // Usar setTimeout para evitar el warning de setState durante render
+            setTimeout(() => {
+              sessionStorage.setItem("dashboard_auth", "true");
+              navigate("/dashboard");
+            }, 0);
             return "";
           }
           return newCode;

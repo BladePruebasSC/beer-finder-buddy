@@ -1,21 +1,16 @@
--- Create filter_options table for custom/editable filters
-CREATE TABLE IF NOT EXISTS filter_options (
-  id TEXT PRIMARY KEY,
-  category TEXT NOT NULL CHECK (category IN ('style', 'color', 'flavor', 'strength', 'bitterness', 'origin')),
-  label TEXT NOT NULL,
-  icon TEXT NOT NULL,
-  is_default BOOLEAN DEFAULT false,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
+-- Fix RLS policies for filter_options table to allow public access
+-- This fixes the issue where filter updates weren't being saved
 
--- Create index for faster lookups by category
-CREATE INDEX IF NOT EXISTS idx_filter_options_category ON filter_options(category);
+-- Drop ALL existing policies first
+DROP POLICY IF EXISTS "Allow public read access to filter options" ON filter_options;
+DROP POLICY IF EXISTS "Allow authenticated users to insert filter options" ON filter_options;
+DROP POLICY IF EXISTS "Allow public users to insert filter options" ON filter_options;
+DROP POLICY IF EXISTS "Allow authenticated users to update filter options" ON filter_options;
+DROP POLICY IF EXISTS "Allow public users to update filter options" ON filter_options;
+DROP POLICY IF EXISTS "Allow authenticated users to delete non-default filter options" ON filter_options;
+DROP POLICY IF EXISTS "Allow public users to delete non-default filter options" ON filter_options;
 
--- Enable RLS
-ALTER TABLE filter_options ENABLE ROW LEVEL SECURITY;
-
--- Create policies for public access
+-- Recreate all policies with proper access
 CREATE POLICY "Allow public read access to filter options"
   ON filter_options
   FOR SELECT
@@ -57,4 +52,3 @@ CREATE POLICY "Allow public users to delete non-default filter options"
   FOR DELETE
   TO public
   USING (is_default = false);
-

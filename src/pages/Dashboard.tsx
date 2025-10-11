@@ -266,7 +266,9 @@ const Dashboard = () => {
     if (window.confirm("¿Estás seguro de eliminar este filtro?")) {
       try {
         await deleteFilterOption(category, optionId);
-        await loadFilters();
+        // Recargar filtros y forzar actualización del estado
+        const updatedFilters = await getFilters();
+        setFilters(updatedFilters);
         toast.success("Filtro eliminado");
       } catch (error) {
         console.error('Error eliminando filtro:', error);
@@ -278,22 +280,28 @@ const Dashboard = () => {
   const handleFilterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const filterOption: FilterOption = {
-      id: filterFormData.id,
-      label: filterFormData.label,
-      icon: filterFormData.icon,
-    };
-
     try {
       if (editingFilter) {
-        await updateFilterOption(filterFormData.category, editingFilter.option.id, filterOption);
+        // Solo enviamos label e icon para actualizar
+        await updateFilterOption(filterFormData.category, editingFilter.option.id, {
+          label: filterFormData.label,
+          icon: filterFormData.icon,
+        });
         toast.success("Filtro actualizado");
       } else {
+        // Para crear, enviamos el objeto completo
+        const filterOption: FilterOption = {
+          id: filterFormData.id,
+          label: filterFormData.label,
+          icon: filterFormData.icon,
+        };
         await addFilterOption(filterFormData.category, filterOption);
         toast.success("Filtro añadido");
       }
 
-      await loadFilters();
+      // Recargar filtros y forzar actualización del estado
+      const updatedFilters = await getFilters();
+      setFilters(updatedFilters);
       setIsFilterDialogOpen(false);
       resetFilterForm();
     } catch (error) {
@@ -349,7 +357,7 @@ const Dashboard = () => {
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold">Dashboard de Administración</h1>
-            <p className="text-muted-foreground mt-1">{beers.length} cervezas • {Object.values(filters).reduce((acc, cat) => acc + cat.options.length, 0)} filtros</p>
+            <p className="text-muted-foreground mt-1">{beers.length} cervezas • {filters ? Object.values(filters).reduce((acc, cat) => acc + cat.options.length, 0) : 0} filtros</p>
           </div>
           <Button variant="outline" onClick={handleLogout}>
             <LogOut className="mr-2" size={16} />
@@ -426,7 +434,7 @@ const Dashboard = () => {
                           <SelectValue placeholder="Selecciona un estilo" />
                         </SelectTrigger>
                         <SelectContent>
-                          {filters.style?.options?.map((option) => (
+                          {filters?.style?.options?.map((option) => (
                             <SelectItem key={option.id} value={option.id}>
                               {option.icon} {option.label}
                             </SelectItem>
@@ -445,7 +453,7 @@ const Dashboard = () => {
                           <SelectValue placeholder="Selecciona un color" />
                         </SelectTrigger>
                         <SelectContent>
-                          {filters.color?.options?.map((option) => (
+                          {filters?.color?.options?.map((option) => (
                             <SelectItem key={option.id} value={option.id}>
                               {option.icon} {option.label}
                             </SelectItem>
@@ -479,8 +487,8 @@ const Dashboard = () => {
                   <div>
                     <Label className="mb-3 block">Sabores * (selecciona uno o varios)</Label>
                     <div className="grid grid-cols-2 gap-3 max-h-48 overflow-y-auto p-3 border rounded-md">
-                      {filters.flavor?.options?.length > 0 ? (
-                        filters.flavor.options.map((option) => (
+                      {filters?.flavor?.options?.length > 0 ? (
+                        filters?.flavor?.options?.map((option) => (
                           <div key={option.id} className="flex items-center space-x-2">
                             <Checkbox
                               id={`flavor-${option.id}`}
@@ -626,7 +634,7 @@ const Dashboard = () => {
                           <SelectValue placeholder="Selecciona el país de origen" />
                         </SelectTrigger>
                         <SelectContent>
-                          {filters.origin?.options?.map((option) => (
+                          {filters?.origin?.options?.map((option) => (
                             <SelectItem key={option.id} value={option.id}>
                               {option.icon} {option.label}
                             </SelectItem>
@@ -795,7 +803,7 @@ const Dashboard = () => {
                       <Label htmlFor="filter-category">Categoría *</Label>
                       <Select
                         value={filterFormData.category}
-                        onValueChange={(value) => setFilterFormData({ ...filterFormData, category: value as keyof typeof filters })}
+                        onValueChange={(value) => setFilterFormData({ ...filterFormData, category: value as keyof Filters })}
                         disabled={!!editingFilter}
                       >
                         <SelectTrigger>
@@ -868,7 +876,7 @@ const Dashboard = () => {
             </div>
 
             <div className="space-y-6">
-              {Object.entries(filters).map(([category, data]) => (
+              {filters ? Object.entries(filters).map(([category, data]) => (
                 <Card key={category} className="p-6">
                   <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
                     <Filter size={20} className="text-primary" />
@@ -901,7 +909,7 @@ const Dashboard = () => {
                           <Button
                             size="sm"
                             variant="destructive"
-                            onClick={() => handleFilterDelete(category as keyof typeof filters, option.id)}
+                            onClick={() => handleFilterDelete(category as keyof Filters, option.id)}
                           >
                             <Trash2 size={14} />
                           </Button>
@@ -910,7 +918,14 @@ const Dashboard = () => {
                     ))}
                   </div>
                 </Card>
-              ))}
+              )) : (
+                <Card className="p-6">
+                  <div className="text-center py-8">
+                    <Loader2 className="animate-spin mx-auto mb-4" size={32} />
+                    <p className="text-muted-foreground">Cargando filtros...</p>
+                  </div>
+                </Card>
+              )}
             </div>
           </TabsContent>
 
