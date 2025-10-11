@@ -53,13 +53,14 @@ export const getFilters = async (): Promise<Filters> => {
       .order("category", { ascending: true });
 
     if (error) {
-      console.error('Error obteniendo filtros desde Supabase:', error);
+      console.error('❌ Error obteniendo filtros desde Supabase:', error);
+      console.log('🔄 Usando filtros desde localStorage');
       return getLocalFilters();
     }
 
     // Si no hay datos en Supabase, usar valores por defecto y migrar
     if (!data || data.length === 0) {
-      console.log('No hay filtros en Supabase, usando valores por defecto');
+      console.log('⚠️ No hay filtros en Supabase, usando valores por defecto');
       return filterCategories;
     }
 
@@ -85,9 +86,14 @@ export const getFilters = async (): Promise<Filters> => {
     });
 
     console.log('✅ Filtros cargados desde Supabase');
+    
+    // Sincronizar con localStorage
+    localStorage.setItem(FILTERS_KEY, JSON.stringify(filters));
+    
     return filters;
   } catch (error) {
-    console.error('Error obteniendo filtros:', error);
+    console.error('❌ Error obteniendo filtros:', error);
+    console.log('🔄 Usando filtros desde localStorage');
     return getLocalFilters();
   }
 };
