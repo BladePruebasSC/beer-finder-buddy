@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -42,8 +42,7 @@ const addDynamicFilter = (category: keyof typeof allAnswersPool, newFilter: stri
   return newAnswer;
 };
 
-const sortAnswersByPopularity = (answers: string[], category: string): string[] => {
-  const filterStats = getFilterStats();
+const sortAnswersByPopularity = (answers: string[], category: string, filterStats: Record<string, number>): string[] => {
   
   console.log('🔍 sortAnswersByPopularity - category:', category);
   console.log('🔍 sortAnswersByPopularity - answers:', answers);
@@ -247,18 +246,16 @@ const allAnswersPool = {
 };
 
 // Obtener respuestas dinámicas que incluyen todas las opciones disponibles
-const getDynamicAnswers = (category: keyof typeof allAnswersPool): string[] => {
+const getDynamicAnswers = (category: keyof typeof allAnswersPool, filterStats: Record<string, number>): string[] => {
   const allOptions = allAnswersPool[category];
   
   // Para la categoría 'initial', mostrar las opciones predefinidas ordenadas por popularidad
   if (category === 'initial') {
-    const sortedOptions = sortAnswersByPopularity(allOptions, category);
+    const sortedOptions = sortAnswersByPopularity(allOptions, category, filterStats);
     console.log('🔍 getDynamicAnswers - allOptions:', allOptions);
     console.log('🔍 getDynamicAnswers - sortedOptions:', sortedOptions);
     return sortedOptions;
   }
-  
-  const filterStats = getFilterStats();
   
   // Crear opciones expandidas que incluyen filtros personalizados usados anteriormente
   const expandedOptions = [...allOptions];
@@ -309,7 +306,7 @@ const getDynamicAnswers = (category: keyof typeof allAnswersPool): string[] => {
     }
   });
   
-  const sorted = sortAnswersByPopularity(expandedOptions, category);
+  const sorted = sortAnswersByPopularity(expandedOptions, category, filterStats);
   
   // Para categorías con más de 6 opciones, mostrar las más populares + algunas aleatorias de las menos usadas
   if (expandedOptions.length > 6) {
@@ -325,64 +322,69 @@ const getDynamicAnswers = (category: keyof typeof allAnswersPool): string[] => {
   return sorted;
 };
 
-const conversationSteps = {
+const getConversationSteps = (filterStats: Record<string, number>) => ({
   initial: {
     question: "¡Hola! ¿Con qué puedo ayudarte?",
     get answers() {
-      return getDynamicAnswers('initial');
+      return getDynamicAnswers('initial', filterStats);
     }
   },
   
   country: {
     question: "¡Perfecto! ¿De qué país te gustaría probar cervezas?",
     get answers() {
-      return getDynamicAnswers('country');
+      return getDynamicAnswers('country', filterStats);
     }
   },
 
   style: {
     question: "¡Excelente! ¿Qué estilo de cerveza prefieres?",
     get answers() {
-      return getDynamicAnswers('style');
+      return getDynamicAnswers('style', filterStats);
     }
   },
 
   flavor: {
     question: "¡Me encanta! ¿Qué sabor específico buscas?",
     get answers() {
-      return getDynamicAnswers('flavor');
+      return getDynamicAnswers('flavor', filterStats);
     }
   },
 
   color: {
     question: "¡Genial! ¿Qué color de cerveza prefieres?",
     get answers() {
-      return getDynamicAnswers('color');
+      return getDynamicAnswers('color', filterStats);
     }
   },
 
   intensity: {
     question: "¡Perfecto! ¿Qué intensidad prefieres?",
     get answers() {
-      return getDynamicAnswers('intensity');
+      return getDynamicAnswers('intensity', filterStats);
     }
   },
 
   bitterness: {
     question: "¡Excelente! ¿Qué nivel de amargor prefieres?",
     get answers() {
-      return getDynamicAnswers('bitterness');
+      return getDynamicAnswers('bitterness', filterStats);
     }
   }
-};
+});
 
 export const AIChat = ({ isOpen, onClose, onSearch, onStartSearch }: AIChatProps) => {
   const location = useLocation();
+  const [filterStats, setFilterStats] = useState<Record<string, number>>({});
+  
+  // Crear conversationSteps con las estadísticas actuales
+  const conversationSteps = useMemo(() => getConversationSteps(filterStats), [filterStats]);
+  
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
       type: 'ai',
-      content: conversationSteps.initial.question,
+      content: getConversationSteps({}).initial.question,
       timestamp: new Date()
     }
   ]);
@@ -404,6 +406,17 @@ export const AIChat = ({ isOpen, onClose, onSearch, onStartSearch }: AIChatProps
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
   const navigate = useNavigate();
+
+  // Cargar estadísticas de filtros al abrir el chat
+  useEffect(() => {
+    if (isOpen) {
+      getFilterStats().then(stats => {
+        setFilterStats(stats);
+      }).catch(error => {
+        console.error('Error loading filter stats:', error);
+      });
+    }
+  }, [isOpen, refreshAnswers]);
 
   const scrollToCenter = () => {
     const chatContainer = document.querySelector('.chat-messages-container');
@@ -737,17 +750,17 @@ export const AIChat = ({ isOpen, onClose, onSearch, onStartSearch }: AIChatProps
         } else {
           // Búsqueda normal - finalizar después de cualquier selección específica
           console.log('🔍 Búsqueda normal - updatedFilters antes de enviar:', updatedFilters);
-          setTimeout(() => {
-            addTypingMessage('¡Perfecto! Basándome en tus preferencias, voy a buscar las cervezas ideales para ti 🎯', () => {
-              setTimeout(() => {
-                console.log('🔍 Filtros desde chat:', updatedFilters); // Debug
+        setTimeout(() => {
+          addTypingMessage('¡Perfecto! Basándome en tus preferencias, voy a buscar las cervezas ideales para ti 🎯', () => {
+            setTimeout(() => {
+              console.log('🔍 Filtros desde chat:', updatedFilters); // Debug
                 setRefreshAnswers(prev => prev + 1); // Actualizar respuestas dinámicas
-                onStartSearch?.(); // Iniciar búsqueda en el componente padre
-                onSearch(updatedFilters); // Pasar los filtros
-              }, 500);
-            });
+              onStartSearch?.(); // Iniciar búsqueda en el componente padre
+              onSearch(updatedFilters); // Pasar los filtros
+            }, 500);
+          });
           }, 800);
-          return;
+        return;
         }
       }
 
@@ -850,7 +863,6 @@ export const AIChat = ({ isOpen, onClose, onSearch, onStartSearch }: AIChatProps
               </div>
               <div className="grid grid-cols-1 gap-2 sm:gap-3">
                 {conversationSteps[currentStep].answers.map((answer, index) => {
-                  const filterStats = getFilterStats();
                   // Extraer el valor del filtro (texto después del emoji)
                   const filterValue = answer.split(' ').slice(1).join(' ');
                   const count = filterStats[filterValue] || 0;
